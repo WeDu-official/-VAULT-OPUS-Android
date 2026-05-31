@@ -382,14 +382,6 @@ export default function App() {
     return items.filter(f => f.displayName.toLowerCase().includes(q));
   }, [files, searchQuery]);
 
-  if (!localConfig) return (
-    <div className="flex flex-col items-center justify-center h-full space-y-4">
-      <div className="animate-spin text-[#3bb5ff]">{Ico.version}</div>
-      <p className="text-gray-500">Loading configuration...</p>
-      <button onClick={fetchConfig} className="px-6 py-2 bg-[#0f1f3a] border border-[#1a3a5c] text-[#3bb5ff] rounded-xl text-sm font-bold btn-touch">Retry Connection</button>
-    </div>
-  );
-
   const handleFieldChange = async (path, val) => {
     const updated = { ...localConfig };
     let curr = updated;
@@ -1091,7 +1083,14 @@ export default function App() {
               <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">Settings</h2>
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Global configuration</p>
             </div>
-            <div className="space-y-10">{Object.entries(localConfig).map(([section, data]) => renderSection(section, data, [section]))}</div>
+            {!localConfig ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <div className="animate-spin text-[#3bb5ff]">{Ico.version}</div>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Fetching configuration...</p>
+              </div>
+            ) : (
+              <div className="space-y-10">{Object.entries(localConfig).map(([section, data]) => renderSection(section, data, [section]))}</div>
+            )}
           </div>
         )}
       </div>

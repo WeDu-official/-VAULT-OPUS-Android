@@ -31,7 +31,7 @@ VAULT_OPUS_SRC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..
 if VAULT_OPUS_SRC_DIR not in sys.path:
     sys.path.insert(0, VAULT_OPUS_SRC_DIR)
 
-from path_utils import ANDROID_WRITABLE_DIR, normalize_path
+from path_utils import ANDROID_WRITABLE_DIR, normalize_path, get_config_path as _get_config_path
 
 # []===================THE ENCODING FIX==========================[]
 try:
@@ -76,7 +76,7 @@ if is_android:
         context = Python.getPlatform().getApplication()
 
         # Ensure config.json is copied or merged to WRITABLE_DIR
-        _initial_config_path = os.path.join(WRITABLE_DIR, "config.json")
+        _initial_config_path = _get_config_path()
         _src_config = os.path.join(VAULT_OPUS_SRC_DIR, "config.json")
 
         # Sync terms_accepted.txt
@@ -86,8 +86,9 @@ if is_android:
         if os.path.exists(_src_terms) and not os.path.exists(_initial_terms_path):
             try:
                 shutil.copy2(_src_terms, _initial_terms_path)
-                logger.info("Synced terms_accepted.txt to app storage.")
-            except: pass
+                logger.info(f"SUCCESS: Synced terms_accepted.txt to app storage.")
+            except Exception as e:
+                logger.error(f"ERROR: Failed to sync terms: {e}")
 
         logger.info(f"Config sync check: src={_src_config}, dst={_initial_config_path}")
 
@@ -205,7 +206,7 @@ async def unified_middleware(request, call_next):
 async def startup_event():
     logger.info("FastAPI Server starting up (Android Mode)...")
     volume_manager.ensure_dirs()
-    config_path = os.path.join(WRITABLE_DIR, "config.json")
+    config_path = _get_config_path()
     config_obj = get_config(config_path)
     config = config_obj._config
     vacuum_on_startup = config.get("database", {}).get("vacuum_on_startup", False)
@@ -238,7 +239,7 @@ class TaskManager:
         if command_type == "download": return self.semaphores.get("download")
         return self.semaphores.get("general")
 
-task_manager = TaskManager(os.path.join(WRITABLE_DIR, "config.json"))
+task_manager = TaskManager(_get_config_path())
 
 RECENT_VOLUMES_FILE = os.path.join(WRITABLE_DIR, "recent_volumes.json")
 
@@ -306,13 +307,15 @@ async def accept_terms():
     try:
         with open(TERMS_ACCEPTED_FILE, "w") as f:
             f.write("1")
+        logger.info("Terms accepted by user.")
         return {"status": "success", "terms_accepted": 1}
     except Exception as e:
+        logger.error(f"Failed to save terms status: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to save terms status: {str(e)}")
 
 @app.get("/api/setup_status")
 async def get_setup_status():
-    config_path = os.path.join(WRITABLE_DIR, "config.json")
+    config_path = _get_config_path()
     config = get_config(config_path)
     token = config._config.get("discord", {}).get("token", "")
     has_valid_token = True if (token and "placeholder" not in token.lower()) else False
@@ -345,7 +348,7 @@ async def list_dbs():
 @app.get("/api/config")
 async def get_current_config():
     try:
-        config_path = os.path.join(WRITABLE_DIR, "config.json")
+        config_path = _get_config_path()
         config_obj = get_config(config_path)
         config_obj.reload()
         return config_obj._config
@@ -355,7 +358,7 @@ async def get_current_config():
 
 @app.post("/api/config")
 async def update_config(new_config: Dict[str, Any]):
-    config_path = os.path.join(WRITABLE_DIR, "config.json")
+    config_path = _get_config_path()
     config_obj = get_config(config_path)
     config_obj._config = config_obj._deep_merge(config_obj._config, new_config)
     try:
@@ -382,7 +385,8 @@ async def save_recent_volumes_endpoint(payload: Dict[str, Any]):
 
 @app.post("/api/setup")
 async def perform_setup(payload: Dict[str, Any]):
-    config = get_config(os.path.join(WRITABLE_DIR, "config.json"))
+    config_path = _get_config_path()
+    config = get_config(config_path)
     token = payload.get("token")
     channel_id = payload.get("channel_id")
     db_name = payload.get("db_name")
