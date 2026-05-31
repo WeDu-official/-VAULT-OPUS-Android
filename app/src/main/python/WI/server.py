@@ -1,5 +1,9 @@
 #---------------------------------------------------------------------
-#server.py (Sandalphon) from the VAULT OPUS PROJECT version 1-R9 (ANDROID MERGE)
+#server.py (Sandalphon) from the VAULT OPUS PROJECT version 1-R10 (ANDROID MERGE)
+#by WEDUXOX/WEDUOFFICIAL - https://github.com/WeDu-official
+#I HAD MADE THIS PROJECT FOR FREE FOR ALL
+#from mankind to mankind... if I disappear don't worry it might just be my exams or anything else, but regardless
+#this code will still be here so DO GOOD NO EVIL....good luck :)
 #by WEDUXOX/WEDUOFFICIAL - https://github.com/WeDu-official
 #---------------------------------------------------------------------
 import os
@@ -74,6 +78,16 @@ if is_android:
         # Ensure config.json is copied or merged to WRITABLE_DIR
         _initial_config_path = os.path.join(WRITABLE_DIR, "config.json")
         _src_config = os.path.join(VAULT_OPUS_SRC_DIR, "config.json")
+
+        # Sync terms_accepted.txt
+        _initial_terms_path = os.path.join(WRITABLE_DIR, "terms_accepted.txt")
+        _src_terms = os.path.join(VAULT_OPUS_SRC_DIR, "terms_accepted.txt")
+
+        if os.path.exists(_src_terms) and not os.path.exists(_initial_terms_path):
+            try:
+                shutil.copy2(_src_terms, _initial_terms_path)
+                logger.info("Synced terms_accepted.txt to app storage.")
+            except: pass
 
         logger.info(f"Config sync check: src={_src_config}, dst={_initial_config_path}")
 
@@ -173,6 +187,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Global paths
+TERMS_ACCEPTED_FILE = os.path.join(WRITABLE_DIR, "terms_accepted.txt")
+
 @app.middleware("http")
 async def unified_middleware(request, call_next):
     try:
@@ -265,6 +282,57 @@ def is_setup_complete() -> int:
             return 1 if val == "1" else 0
     except: return 0
 
+def is_terms_accepted() -> int:
+    if not os.path.exists(TERMS_ACCEPTED_FILE):
+        try:
+            with open(TERMS_ACCEPTED_FILE, "w") as f:
+                f.write("0")
+        except:
+            pass
+        return 0
+    try:
+        with open(TERMS_ACCEPTED_FILE, "r") as f:
+            val = f.read().strip()
+            return 1 if val == "1" else 0
+    except:
+        return 0
+
+@app.get("/api/terms_status")
+async def get_terms_status():
+    return {"terms_accepted": is_terms_accepted()}
+
+@app.post("/api/accept_terms")
+async def accept_terms():
+    try:
+        with open(TERMS_ACCEPTED_FILE, "w") as f:
+            f.write("1")
+        return {"status": "success", "terms_accepted": 1}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save terms status: {str(e)}")
+
+@app.get("/api/setup_status")
+async def get_setup_status():
+    config_path = os.path.join(WRITABLE_DIR, "config.json")
+    config = get_config(config_path)
+    token = config._config.get("discord", {}).get("token", "")
+    has_valid_token = True if (token and "placeholder" not in token.lower()) else False
+    channel_id = str(config._config.get("discord", {}).get("channel_id", ""))
+    has_valid_channel = True if (channel_id and "placeholder" not in channel_id.lower()) else False
+    has_valid_volume = False
+    db_dir = os.path.join(WRITABLE_DIR, "DATABASES")
+    config_dir = os.path.join(WRITABLE_DIR, "VOLUMES_CONFIGS")
+    if os.path.exists(db_dir):
+        for f in os.listdir(db_dir):
+            if f.endswith(".db"):
+                stem = f[:-3]
+                if os.path.exists(os.path.join(config_dir, f"{stem}_config.json")):
+                    has_valid_volume = True; break
+    current_status = is_setup_complete()
+    if has_valid_token and has_valid_channel and has_valid_volume and current_status == 0:
+        with open(SETUP_FILE, "w") as f: f.write("1")
+        current_status = 1
+    return {"setup_complete": current_status, "has_valid_token": has_valid_token, "has_valid_channel": has_valid_channel, "has_valid_volume": has_valid_volume}
+
 @app.get("/api/ping")
 async def ping():
     return {"status": "ok", "platform": platform.platform(), "writable_dir": WRITABLE_DIR}
@@ -312,28 +380,6 @@ async def save_recent_volumes_endpoint(payload: Dict[str, Any]):
     save_recent_volumes(recent)
     return {"status": "success", "recent": recent}
 
-@app.get("/api/setup_status")
-async def get_setup_status_endpoint():
-    config = get_config(os.path.join(WRITABLE_DIR, "config.json"))
-    token = config._config.get("discord", {}).get("token", "")
-    has_valid_token = True if (token and "placeholder" not in token.lower()) else False
-    channel_id = str(config._config.get("discord", {}).get("channel_id", ""))
-    has_valid_channel = True if (channel_id and "placeholder" not in channel_id.lower()) else False
-    has_valid_volume = False
-    db_dir = os.path.join(WRITABLE_DIR, "DATABASES")
-    config_dir = os.path.join(WRITABLE_DIR, "VOLUMES_CONFIGS")
-    if os.path.exists(db_dir):
-        for f in os.listdir(db_dir):
-            if f.endswith(".db"):
-                stem = f[:-3]
-                if os.path.exists(os.path.join(config_dir, f"{stem}_config.json")):
-                    has_valid_volume = True; break
-    current_status = is_setup_complete()
-    if has_valid_token and has_valid_channel and has_valid_volume and current_status == 0:
-        with open(SETUP_FILE, "w") as f: f.write("1")
-        current_status = 1
-    return {"setup_complete": current_status, "has_valid_token": has_valid_token, "has_valid_channel": has_valid_channel, "has_valid_volume": has_valid_volume}
-
 @app.post("/api/setup")
 async def perform_setup(payload: Dict[str, Any]):
     config = get_config(os.path.join(WRITABLE_DIR, "config.json"))
@@ -371,7 +417,8 @@ async def perform_setup(payload: Dict[str, Any]):
                 recent = get_recent_volumes()
                 if db_name not in recent: recent.insert(0, db_name); save_recent_volumes(recent)
         except Exception as e: raise HTTPException(status_code=400, detail=f"Failed to create volume: {str(e)}")
-    else: db_name = first_db
+    else:
+        db_name = first_db
     with open(SETUP_FILE, "w") as f: f.write("1")
     return {"status": "success", "db_name": db_name}
 

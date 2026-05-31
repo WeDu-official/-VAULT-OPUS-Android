@@ -1,6 +1,9 @@
 #---------------------------------------------------------------------
-#VAULT_OPUS.py (AL-MALIK AL- A'LA) from the VAULT OPUS PROJECT version 1-R9
+#VAULT_OPUS.py (AL-MALIK AL- A'LA) from the VAULT OPUS PROJECT version 1-R10
 #by WEDUXOX/WEDUOFFICIAL - https://github.com/WeDu-official
+#I HAD MADE THIS PROJECT FOR FREE FOR ALL
+#from mankind to mankind... if I disappear don't worry it might just be my exams or anything else, but regardless
+#this code will still be here so DO GOOD NO EVIL....good luck :)
 #---------------------------------------------------------------------
 #[]===================THE ENCODING FIX==========================[]
 try:
@@ -155,6 +158,7 @@ async def run_cli(args_list=None):
     del_p.set_defaults(delete_type="soft")
     del_p.add_argument("--nuke", action="store_true")
     del_p.add_argument("--skip_confirmation", choices=["yes", "no"], default="no")
+    del_p.add_argument("--hdo", "--hard_delete_option", choices=["S", "F", "E", "G"], default=None, dest="hard_delete_option")
     add_common_input(del_p)
 
     # Modify
@@ -348,6 +352,7 @@ async def run_cli(args_list=None):
                 st_version_param=args.st_version, en_version_param=args.en_version,
                 all_versions_param=(args.all_versions == "yes"), id_based=args.id_based,
                 delete_type=getattr(args, "delete_type", "soft"),
+                hard_delete_option=getattr(args, "hard_delete_option", None),
                 skip_confirmation=(args.skip_confirmation == "yes")
             )
             if not success: sys.exit(1)
