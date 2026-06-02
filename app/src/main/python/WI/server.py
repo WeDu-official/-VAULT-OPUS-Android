@@ -1,12 +1,9 @@
 #---------------------------------------------------------------------
 #server.py (Sandalphon) from the VAULT OPUS PROJECT version 1-R10 (ANDROID MERGE)
-<<<<<<< HEAD
 #by WEDUXOX/WEDUOFFICIAL - https://github.com/WeDu-official
 #I HAD MADE THIS PROJECT FOR FREE FOR ALL
 #from mankind to mankind... if I disappear don't worry it might just be my exams or anything else, but regardless
 #this code will still be here so DO GOOD NO EVIL....good luck :)
-=======
->>>>>>> temp-work
 #by WEDUXOX/WEDUOFFICIAL - https://github.com/WeDu-official
 #---------------------------------------------------------------------
 import os
