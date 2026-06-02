@@ -1,5 +1,4 @@
-// App.jsx (FOR MOBILE) from the VAULT OPUS PROJECT version 1-R10
-// ==================== FULL MOBILE GUI App.jsx (ANDROID MERGE) ====================
+// ==================== ANDROID-FRIENDLY FULL-FEATURED App.jsx 1-R10====================
 // Intercept all relative fetch calls to point to the backend at 127.0.0.1:8000
 const originalFetch = window.fetch;
 window.fetch = async (input, init) => {
@@ -423,27 +422,253 @@ export default function App() {
     </div>
   );
 
-  const MiniMarkdown = ({ content }) => (
-    <div className="text-[11px] leading-relaxed text-gray-400 space-y-3 font-medium">
-      {content.split('\n').map((line, i) => {
-        if (line.startsWith('# ')) return <h1 key={i} className="text-lg font-black text-white pt-2 border-b border-[#1a3a5c] pb-1 uppercase">{line.substring(2)}</h1>;
-        if (line.startsWith('## ')) return <h2 key={i} className="text-sm font-black text-[#3bb5ff] pt-4 uppercase tracking-wider">{line.substring(3)}</h2>;
-        if (line.startsWith('- ')) return <div key={i} className="flex gap-2 pl-2"><span className="text-[#3bb5ff]">•</span><span>{line.substring(2)}</span></div>;
-        if (line.trim() === '') return <div key={i} className="h-1" />;
-        return <p key={i}>{line}</p>;
+const TERMS_AND_CONDITIONS_MARKDOWN = `# VAULT OPUS — TERMS OF SERVICE & PRIVACY POLICY
+
+**Version 1-R10 | Effective Date: 2026**
+
+Welcome to VAULT OPUS, an open-source, self-hosted cloud storage system created by WeDu. By using this software, you agree to the following terms. If you do not agree, do not use the application.
+
+## 1. Acceptance of Terms
+By downloading, installing, accessing, or using VAULT OPUS in any form (Desktop Client, Mobile Web Interface, CLI, or Android Application), you acknowledge that you have read, understood, and agree to be bound by these Terms of Service and Privacy Policy in their entirety.
+
+## 2. Nature of the Software
+- **Open Source**: VAULT OPUS is released under the **MIT License**. You are free to use, modify, merge, publish, distribute, sublicense, and/or sell copies of this software, provided the original copyright notice and permission notice are included.
+- **Self-Hosted**: VAULT OPUS runs entirely on your own infrastructure. There are no centralized servers operated by WeDu. All data processing, storage orchestration, and encryption happen locally on your machine.
+- **No Accounts or Registration**: VAULT OPUS does not require you to create an account, provide personal information, or register with any service operated by WeDu.
+
+## 3. Discord Integration & Third-Party Compliance
+- **Discord as Storage Backend**: VAULT OPUS uses Discord's platform as a file storage backend by uploading encrypted file chunks to Discord channels via your personal Discord Bot Token. This is a core architectural choice of the software.
+- **Your Responsibility**: You are solely and entirely responsible for ensuring that your use of VAULT OPUS complies with **Discord's Terms of Service** ([https://discord.com/terms](https://discord.com/terms)) and **Discord's Community Guidelines**. WeDu has no control over Discord's policies and is not responsible for any actions Discord may take against your account.
+- **Risk of Account Action**: Discord may, at its sole discretion, suspend, terminate, or restrict your Discord account or bot if your usage violates their terms. This includes but is not limited to excessive API usage, storage abuse, or uploading prohibited content. WeDu bears no liability for any such actions taken by Discord.
+- **Bot Token Security**: Your Discord Bot Token is stored locally in your \`config.json\` file. Never share this token with anyone. If compromised, regenerate it immediately via the Discord Developer Portal.
+
+## 4. Data Privacy & No Data Collection
+- **Zero Telemetry**: VAULT OPUS collects absolutely no usage data, analytics, telemetry, crash reports, or personal information. Nothing is transmitted to WeDu or any third party.
+- **Local-Only Operation**: All configuration files (\`config.json\`), databases (\`.db\` volumes), encryption keys, and volume configs are stored exclusively on your local filesystem. WeDu never has access to any of your data.
+- **No Network Calls to WeDu**: The software makes zero network requests to WeDu's servers. The only external network communication is between your machine and the Discord API, initiated entirely by your own Bot Token.
+
+## 5. Encryption & Security
+- **Encryption Architecture**: VAULT OPUS employs a two-layer encryption system: **Argon2id** (memory-hard key derivation) for seed normalization followed by **HKDF-SHA256** for final key derivation, producing **Fernet (AES-128-CBC + HMAC-SHA256)** encrypted data.
+- **Per-Volume Encryption**: Each volume has its own unique cryptographic salt stored in a separate config file. Encryption keys are derived from your chosen seed combined with this volume-specific salt, ensuring complete isolation between volumes.
+- **Your Keys, Your Responsibility**: WeDu does not store, manage, or have access to any of your encryption seeds, keys, or passwords. If you lose your encryption seed or volume configuration file, your data is irrecoverable. There is no recovery mechanism, no master key, and no backdoor.
+- **No Warranty on Security**: While VAULT OPUS uses industry-standard cryptographic libraries (\`cryptography\`, \`argon2-cffi\`), the software is provided without warranty regarding the absolute security of your data. You use the encryption features at your own risk.
+
+## 6. Volume Sharing & Packages
+- **Volume Packages (.vov)**: VAULT OPUS allows you to export volumes as \`.vov\` package files for sharing with others. These packages contain your database and encryption configuration.
+- **Password-Protected Packages (.e.vov)**: You may optionally protect shared packages with AES-256 encryption via password. Unprotected packages (.vov) expose your volume database and encryption config to anyone who receives the file.
+- **Sharing Risks**: When you share a volume package, the recipient gains full access to the data within that volume, including the encryption keys needed to decrypt files. Only share volumes with trusted parties. WeDu is not responsible for any unauthorized access resulting from shared packages.
+
+## 7. Data Loss & Liability
+- **No Guarantee of Data Integrity**: VAULT OPUS is provided "AS IS" without warranty of any kind. WeDu makes no guarantees that your data will remain intact, accessible, or uncorrupted.
+- **Causes of Data Loss May Include**:
+- Discord API changes, outages, or account suspensions
+- Corruption of local SQLite databases or volume config files
+- Loss or misconfiguration of encryption seeds/keys
+- Software bugs, hardware failures, or power loss during uploads
+- Accidental deletion of volumes, chunks, or configuration files
+- **No Recovery Service**: WeDu does not offer any data recovery service. You are solely responsible for maintaining backups of your databases, volume configs, and encryption seeds.
+- **Limitation of Liability**: To the maximum extent permitted by law, WeDu and its contributors shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of data, loss of profits, or business interruption arising from the use of this software.
+
+## 8. Prohibited Uses
+You agree NOT to use VAULT OPUS to:
+- Store, upload, distribute, or facilitate access to illegal content, including but not limited to child exploitation material, malware, ransomware, or stolen data
+- Store or distribute copyrighted material without proper authorization from the rights holder
+- Abuse Discord's infrastructure through excessive automated requests, rate limit circumvention, or storage exploitation beyond reasonable personal use
+- Harass, threaten, or harm any individual or group
+- Circumvent or attempt to circumvent any security measures of Discord or any third-party service
+- Use the software for any purpose that violates applicable local, national, or international law
+
+## 9. Software Updates & Changes
+- **No Automatic Updates**: VAULT OPUS does not automatically update itself. You choose when and whether to update to newer versions.
+- **Breaking Changes**: Future versions may introduce changes to database schemas, encryption methods, or file formats. While we strive for backward compatibility, it is not guaranteed. Always backup your data before updating.
+- **Terms Updates**: We reserve the right to modify these Terms at any time. Updated terms will be included in new releases. Your continued use of the software after updating constitutes acceptance of revised terms.
+
+## 10. Open Source License
+This software is licensed under the **MIT License**:
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## 11. Contact
+- **GitHub**: [https://github.com/WeDu-official](https://github.com/WeDu-official)
+- **Project**: VAULT OPUS (WeDu)
+
+By clicking "I Accept the Terms and Conditions" you confirm that you have read, understood, and agree to all of the above.`;
+
+const WELCOME_YOUTUBE_VIDEO_URL = "https://www.youtube.com/embed/i9rnTi9l2ww";
+
+function parseInlineMarkdown(text) {
+  const parts = [];
+  const regex = /(\*\*.*?\*\*|`.*?`|\[.*?\]\(.*?\)|https?:\/\/[^\s)]+)/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    const index = match.index;
+    const matchedText = match[0];
+
+    if (index > lastIndex) {
+      parts.push(text.substring(lastIndex, index));
+    }
+
+    if (matchedText.startsWith('**') && matchedText.endsWith('**')) {
+      parts.push(<strong key={index} className="font-extrabold text-white">{matchedText.slice(2, -2)}</strong>);
+    } else if (matchedText.startsWith('`') && matchedText.endsWith('`')) {
+      parts.push(<code key={index} className="bg-[#060d1a] border border-[#1a3a5c] rounded px-1.5 py-0.5 font-mono text-xs text-amber-400">{matchedText.slice(1, -1)}</code>);
+    } else if (matchedText.startsWith('[') && matchedText.includes('](')) {
+      const closingBracket = matchedText.indexOf(']');
+      const label = matchedText.slice(1, closingBracket);
+      const url = matchedText.slice(closingBracket + 2, -1);
+      parts.push(<a key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-[#3bb5ff] hover:underline font-bold">{label}</a>);
+    } else if (matchedText.startsWith('http')) {
+      // Handle bare URL, removing trailing punctuation like periods or commas
+      const url = matchedText.replace(/[.,;]$/, '');
+      parts.push(<a key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-[#3bb5ff] hover:underline font-bold">{url}</a>);
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+function MiniMarkdown({ content }) {
+  const lines = content.split('\n');
+  return (
+    <div className="space-y-4 text-sm text-gray-300 leading-relaxed font-sans text-left">
+      {lines.map((line, idx) => {
+        if (line.startsWith('# ')) {
+          return <h1 key={idx} className="text-xl font-black text-white mt-6 mb-3 border-b border-[#1a3a5c] pb-2 uppercase tracking-wide">{line.slice(2)}</h1>;
+        }
+        if (line.startsWith('## ')) {
+          return <h2 key={idx} className="text-base font-bold text-[#3bb5ff] mt-5 mb-2 uppercase tracking-wider">{line.slice(3)}</h2>;
+        }
+        if (line.startsWith('### ')) {
+          return <h3 key={idx} className="text-sm font-bold text-white mt-4 mb-2">{line.slice(4)}</h3>;
+        }
+        if (line.trim().startsWith('- ')) {
+          const text = line.trim().slice(2);
+          return (
+            <div key={idx} className="flex items-start gap-2.5 my-1.5 pl-1">
+              <span className="text-[#3bb5ff] mt-1.5 text-[8px]">•</span>
+              <span className="text-gray-300 text-xs flex-1">{parseInlineMarkdown(text)}</span>
+            </div>
+          );
+        }
+        if (line.trim() === '') {
+          return <div key={idx} className="h-1" />;
+        }
+        return <p key={idx} className="text-xs text-gray-400 font-medium">{parseInlineMarkdown(line)}</p>;
       })}
     </div>
   );
+}
 
-  const PasswordPromptModalContent = ({ items, onConfirm }) => {
-    const [passwords, setPasswords] = useState({});
-    return (
-      <div className="space-y-4">
-        <p className="text-xs text-gray-400 leading-relaxed uppercase tracking-widest font-bold mb-4">Encryption keys required:</p>
-        {items.map(item => (
-          <div key={item.id} className="space-y-2">
-            <label className="text-[10px] text-[#3bb5ff] font-black uppercase tracking-widest">{item.name}</label>
-            <input type="password" value={passwords[item.id] || ''} onChange={e => setPasswords({ ...passwords, [item.id]: e.target.value })} placeholder="Enter password..." className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white focus:border-[#3bb5ff] outline-none" />
+// ---------- Main App Component ----------
+export default function App() {
+  // State
+  const [tab, setTab] = useState('explorer');
+  const [dbs, setDbs] = useState([]);
+  const [selectedDb, setSelectedDb] = useState(localStorage.getItem('mob_selectedDb') || '');
+  const [tree, setTree] = useState(null);
+  const [currentPath, setCurrentPath] = useState('.');
+  const [currentVersion, setCurrentVersion] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [ws, setWs] = useState(null);
+  const [terminalOutput, setTerminalOutput] = useState('');
+  const [queue, setQueue] = useState([]);
+  const [config, setConfig] = useState(null);
+  const [promptQueue, setPromptQueue] = useState([]);
+  const [bottomSheet, setBottomSheet] = useState(null);
+  const [modal, setModal] = useState(null);
+  const [showCreateVolume, setShowCreateVolume] = useState(false);
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
+  const [setupData, setSetupData] = useState({ token: '', channel_id: '', db_name: '' });
+  const [setupStatus, setSetupStatus] = useState({ has_valid_token: false, has_valid_channel: false, has_valid_volume: false });
+  const [newDbName, setNewDbName] = useState('');
+  const [externalVolumes, setExternalVolumes] = useState(() => { const saved = localStorage.getItem('mob_externalVolumes'); return saved ? JSON.parse(saved) : []; });
+  const [recentVolumes, setRecentVolumes] = useState(() => { const saved = localStorage.getItem('mob_recentVolumes'); return saved ? JSON.parse(saved) : []; });
+  const [toast, setToast] = useState(null);
+  const [passwordModal, setPasswordModal] = useState({ open: false, path: '', password: '', error: '' });
+  const [showSharePasswordModal, setShowSharePasswordModal] = useState(false);
+  const [dbToShare, setDbToShare] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [volumeError, setVolumeError] = useState(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const reconnectTimeoutRef = useRef(null);
+  const reconnectAttemptsRef = useRef(0);
+  const retryCountRef = useRef(0);
+  const maxRetries = 10;
+  const retryInterval = 2000;
+
+  const showToast = (msg, type = 'info') => setToast({ message: msg, type, key: Date.now() });
+
+  // Android‑friendly WebSocket with fallback to 127.0.0.1:8000
+
+  const doImport = async (path, password) => {
+    if (passwordModal.error) {
+      setPasswordModal(prev => ({ ...prev, error: '' }));
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    try {
+      const body = { vov_path: path };
+      if (password) body.password = password;
+      const res = await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Import failed');
+      }
+      showToast('Imported successfully', 'success');
+      setPasswordModal({ open: false, path: '', password: '', error: '' });
+      setModal(null);
+      fetchDbs();
+    } catch (error) {
+      if (password !== null && error.message && (error.message.toLowerCase().includes('password') || error.message.toLowerCase().includes('incorrect') || error.message.toLowerCase().includes('mac'))) {
+        setPasswordModal(prev => ({ ...prev, error: 'Incorrect password. Try again.', password: '' }));
+      } else {
+        setPasswordModal({ open: false, path: '', password: '', error: '' });
+        showToast('Import failed: ' + error.message, 'error');
+      }
+    }
+  };
+
+
+  const executeShare = async (password = null) => {
+    setShowSharePasswordModal(false);
+    try {
+      const body = { db_name: dbToShare };
+      if (password) body.password = password;
+      const res = await fetch('/api/dbs/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Failed to package volume');
+      }
+      const data = await res.json();
+      const lockIcon = password ? '🔒 ' : '';
+      setModal({
+        title: password ? '🔒 Volume Packaged' : 'Volume Packaged',
+        content: (
+          <div className="space-y-4">
+            <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-xl">
+              <p className="text-sm text-green-400 font-bold">{lockIcon}📦 Packaged Successfully!</p>
+              <p className="text-xs text-gray-300 mt-2">
+                Volume <span className="text-white font-mono">{dbToShare}</span> packaged successfully!<br />
+                Package: <span className="text-white font-mono">{data.filename}</span><br />
+                Stored in <span className="text-white font-mono">src/SHARABLES</span> folder.
+                {password && <span className="block mt-1 text-amber-300">This package is password-protected.</span>}
+              </p>
+            </div>
+            <button onClick={() => { fetch('/api/dbs/open_sharables', { method: 'POST' }); setModal(null); }} className="w-full py-3 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl font-bold flex items-center justify-center gap-2 btn-touch">{Ico.share} Open src/SHARABLES Folder</button>
+            <button onClick={() => setModal(null)} className="w-full py-3 bg-[#0f1f3a] text-gray-300 rounded-xl text-sm btn-touch">Close</button>
           </div>
         ))}
         <button onClick={() => onConfirm(passwords)} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-xs mt-4 btn-touch">Confirm Passwords</button>
@@ -451,17 +676,270 @@ export default function App() {
     );
   };
 
-  const FullNameModalContent = ({ item, onClose }) => (
-    <div className="space-y-4">
-      <div className="p-4 bg-[#060d1a] rounded-2xl border border-[#1a3a5c] font-mono text-xs break-all text-gray-300 leading-relaxed">{item.displayName}</div>
-      <button onClick={onClose} className="mt-4 w-full py-3 bg-[#0f1f3a] hover:bg-[#1a3a5c] text-white rounded-xl font-medium transition-all duration-150 active:scale-95 border border-[#1a3a5c]">Close Dialog</button>
-    </div>
-  );
+  const connectWS = () => {
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    let host = window.location.host;
+    // Android‑friendly fallback: if we're on dev server (port 5173) or no port (file:/// or localhost), use the backend directly
+    if (window.location.port === '5173' || !host.includes(':')) host = '127.0.0.1:8000';
+    setConnectionStatus('connecting');
+    const socket = new WebSocket(`${proto}//${host}/ws/cli`);
 
-  const DeleteModalContent = ({ singleItem, onConfirm, onCancel }) => {
-    const [opts, setOpts] = useState({ type: 'soft', scope: 'latest', version: '', startVersion: '', endVersion: '' });
-    const [versions, setVersions] = useState([]);
-    useEffect(() => {
+    socket.onopen = () => {
+      setWs(socket);
+      setConnectionStatus('connected');
+      reconnectAttemptsRef.current = 0;
+      setTerminalOutput(p => p + '\n[Connected to VAULT OPUS CLI]\n');
+      // Fetch initial data once connected
+      fetchDbs(); fetchConfig(); fetchRecentVolumes(); fetchSetupStatus(); fetchTermsStatus();
+
+      // Fix: If a volume is pre-selected, try to load its files once connected
+      if (localStorage.getItem('mob_selectedDb')) {
+        setTimeout(() => fetchFiles('.', null), 500);
+      }
+    };
+
+    socket.onmessage = e => {
+      const msg = JSON.parse(e.data);
+      const tid = msg.task_id;
+      const line = msg.data || '';
+      if (msg.type === 'stdout' || msg.type === 'stderr') {
+        setTerminalOutput(p => p + line);
+
+        // Detect type-mismatch fallback sentinel and show a modal dialog
+        const dialogMatch = line.match(/\[DIALOG:TYPE_MISMATCH\]([^|]+)\|([^|]+)\|(.+)/);
+        if (dialogMatch) {
+          const [, localName, targetName, fallbackNickname] = dialogMatch;
+          setModal({
+            title: '⚠️ Type Mismatch — Converted to New Upload',
+            content: (
+              <div className="space-y-4">
+                <p className="text-sm text-amber-300 leading-relaxed">
+                  The upload for <span className="font-bold text-white">"{localName}"</span> could not be saved as a new version of <span className="font-bold text-white">"{targetName}"</span> because one is a file and the other is a folder.
+                </p>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  It has been automatically re-submitted as a <span className="font-bold text-white">NEW UPLOAD</span> with the auto-generated name:
+                </p>
+                <div className="p-3 bg-[#060d1a] border border-amber-500/30 rounded-xl font-mono text-xs text-amber-300 break-all">
+                  {fallbackNickname}
+                </div>
+              </div>
+            ),
+            onClose: () => setModal(null)
+          });
+        }
+
+        const progressMatch = line.match(/Overall.*Progress.*\((\d+)%\)/i) || line.match(/Overall:.*\((\d+)%\)/i);
+        setQueue(q => q.map(i => {
+          if (i.id !== tid) return i;
+          if (i.status === 'completed' || i.status === 'failed') return i;
+          if (line.includes('[OP_SUCCESS]')) return { ...i, status: 'completed', progress: 100 };
+          if (line.includes('[OP_FAILURE]')) return { ...i, status: 'failed' };
+          if (progressMatch) return { ...i, status: 'running', progress: parseInt(progressMatch[1], 10) };
+          return i;
+        }));
+      } else if (msg.type === 'status') {
+        setQueue(q => q.map(i => i.id === tid ? { ...i, status: line.includes('Queued') ? 'queued' : 'running' } : i));
+      } else if (msg.type === 'prompt') {
+        setPromptQueue(prev => [...prev, { text: msg.prompt, isPassword: msg.is_password, taskId: tid }]);
+      } else if (msg.type === 'exit') {
+        setTerminalOutput(p => p + `\n[Process ${tid} exited with code: ${msg.code}]\n`);
+        setQueue(q => q.map(i => i.id === tid ? { ...i, status: msg.code === 0 ? 'completed' : 'failed', progress: msg.code === 0 ? 100 : i.progress } : i));
+        if (msg.code === 0) { showToast('Operation completed', 'success'); setTimeout(() => { fetchFiles(currentPath); }, 300); }
+        else showToast('Operation failed', 'error');
+      }
+    };
+
+    socket.onclose = () => {
+      setWs(null);
+      setConnectionStatus('disconnected');
+      setTerminalOutput(p => p + '\n[Disconnected from VAULT OPUS CLI]\n');
+      if (reconnectAttemptsRef.current < 10) {
+        reconnectAttemptsRef.current++;
+        reconnectTimeoutRef.current = setTimeout(connectWS, 2000);
+      }
+    };
+
+    socket.onerror = () => socket.close();
+  };
+
+  useEffect(() => {
+    connectWS();
+    return () => {
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (ws) ws.close();
+    };
+  }, []);
+
+  const sendWS = (action, args, task_id) => { if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ action, args, task_id })); };
+  const addQueue = (name, type) => { const id = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`; setQueue(q => [...q, { id, name, status: 'queued', progress: 0 }]); return id; };
+  const runCmd = (args, name, type) => { const id = addQueue(name, type); sendWS('run', args, id); };
+
+  // Data fetching
+  const fetchDbs = async () => {
+    try {
+      const r = await fetch('/api/dbs');
+      const data = await r.json();
+      const availableDbs = data.dbs || [];
+      const all = [...availableDbs];
+      externalVolumes.forEach(ext => { if (!all.includes(ext)) all.push(ext); });
+      setDbs(all);
+    } catch (e) { showToast('Failed to fetch volumes', 'error'); }
+  };
+  const fetchConfig = async () => {
+    try {
+      const r = await fetch('/api/config');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      setConfig(data);
+    } catch (e) {
+      console.error('Failed to fetch config:', e);
+    }
+  };
+  const fetchRecentVolumes = async () => {
+    try {
+      const r = await fetch('/api/recent_volumes');
+      const data = await r.json();
+      const recent = data.recent || [];
+      setRecentVolumes(recent);
+      localStorage.setItem('mob_recentVolumes', JSON.stringify(recent));
+    } catch (e) { console.error('Failed to fetch recent volumes:', e); }
+  };
+  const updateRecentVolumes = (updater) => {
+    setRecentVolumes(prev => {
+      const nextRecent = typeof updater === 'function' ? updater(prev) : updater;
+      localStorage.setItem('mob_recentVolumes', JSON.stringify(nextRecent));
+      fetch('/api/recent_volumes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recent: nextRecent }) }).catch(err => console.error('Failed to save recent volumes:', err));
+      return nextRecent;
+    });
+  };
+  const fetchFiles = async (path, version = currentVersion) => {
+    if (!selectedDb) return;
+    setVolumeError(null);
+    try {
+      // Normalize db name: preserve path if absolute, ensure .db extension
+      const isAbsolute = selectedDb.startsWith('/') || selectedDb.includes(':\\');
+      const dbParam = isAbsolute
+        ? (selectedDb.endsWith('.db') ? selectedDb : `${selectedDb}.db`)
+        : selectedDb.split(/[\/\\]/).pop().endsWith('.db') ? selectedDb.split(/[\/\\]/).pop() : `${selectedDb.split(/[\/\\]/).pop()}.db`;
+
+      let url = `/api/listfiles?db=${encodeURIComponent(dbParam)}&path=${encodeURIComponent(path)}`;
+      if (version) url += `&version=${encodeURIComponent(version)}`;
+      const r = await fetch(url);
+      const data = await r.json();
+
+      if (!r.ok || data.error) {
+        // If it's a "not found" error, it's likely a real issue, not a race condition
+        if (path !== '.' && (data.error?.toLowerCase().includes('not found') || !r.ok)) {
+          setCurrentPath('.');
+          fetchFiles('.');
+          return;
+        }
+
+        // Handle possible race condition on root path
+        if (path === '.') {
+          try {
+            const checkR = await fetch(`/api/dbs`);
+            const checkData = await checkR.json();
+            const availableDbs = checkData.dbs || [];
+
+            const normalizedSelected = dbParam.split(/[\/\\]/).pop();
+            const normalizedAvailable = availableDbs.map(db => db.split(/[\/\\]/).pop());
+            const isExternal = externalVolumes.some(ext => {
+              const extBase = ext.split(/[\/\\]/).pop();
+              return ext === dbParam || extBase === normalizedSelected;
+            });
+
+            if (!normalizedAvailable.includes(normalizedSelected) && !isExternal) {
+              setVolumeError("This volume doesn't exist");
+              setTree(null);
+              retryCountRef.current = 0; // Don't retry if it definitely doesn't exist
+              return;
+            }
+          } catch (_) { }
+
+          // If we reach here, it might just be the server starting up
+          if (retryCountRef.current < maxRetries) {
+            retryCountRef.current++;
+            setIsRetrying(true);
+            setTimeout(() => fetchFiles(path, version), retryInterval);
+            return;
+          }
+        }
+
+        setVolumeError(data.error || "Error accessing volume");
+        setTree(null);
+        setIsRetrying(false);
+        retryCountRef.current = 0;
+        return;
+      }
+      setTree(data);
+      setIsRetrying(false);
+      retryCountRef.current = 0;
+    } catch (e) {
+      if (retryCountRef.current < maxRetries) {
+        retryCountRef.current++;
+        setIsRetrying(true);
+        setTimeout(() => fetchFiles(path, version), retryInterval);
+      } else {
+        setVolumeError("Could not connect to volume");
+        setTree(null);
+        setIsRetrying(false);
+        retryCountRef.current = 0;
+      }
+    }
+  };
+  const fetchSetupStatus = async () => {
+    try {
+      const r = await fetch('/api/setup_status');
+      const data = await r.json();
+      setSetupStatus({ has_valid_token: data.has_valid_token, has_valid_channel: data.has_valid_channel, has_valid_volume: data.has_valid_volume });
+      if (data.setup_complete === 0) setShowSetupModal(true);
+    } catch (e) { }
+  };
+
+
+  const fetchTermsStatus = async () => {
+    try {
+      const r = await fetch('/api/terms_status');
+      const data = await r.json();
+      if (data.accepted === false) {
+        setShowTerms(true);
+      }
+    } catch (e) {
+      console.error('Failed to fetch terms status', e);
+    }
+  };
+
+  const handleAcceptTerms = async () => {
+    try {
+      const res = await fetch('/api/accept_terms', { method: 'POST' });
+      if (!res.ok) throw new Error('Failed to update terms acceptance');
+      setShowTerms(false);
+      setShowWelcomeVideo(true);
+    } catch (e) {
+      showToast('Error saving terms acceptance. Please try again.', 'error');
+    }
+  };
+
+  useEffect(() => { fetchDbs(); fetchConfig(); fetchRecentVolumes(); fetchSetupStatus(); fetchTermsStatus(); }, []);
+  useEffect(() => {
+    if (selectedDb) {
+      // Normalize: preserve path if absolute, ensure .db extension
+      const isAbsolute = selectedDb.startsWith('/') || selectedDb.includes(':\\');
+      const dbWithExt = isAbsolute
+        ? (selectedDb.endsWith('.db') ? selectedDb : `${selectedDb}.db`)
+        : (selectedDb.split(/[\/\\]/).pop().endsWith('.db') ? selectedDb.split(/[\/\\]/).pop() : `${selectedDb.split(/[\/\\]/).pop()}.db`);
+
+      if (dbWithExt !== selectedDb) {
+        setSelectedDb(dbWithExt);
+        return;
+      }
+
+      localStorage.setItem('mob_selectedDb', dbWithExt);
+      updateRecentVolumes(prev => [dbWithExt, ...prev.filter(db => db !== dbWithExt)].slice(0, 10));
+      setCurrentVersion(null);
+      setCurrentPath('.');
       const load = async () => {
         if (!singleItem) return;
         const itid = singleItem.itemid;
@@ -629,10 +1107,37 @@ export default function App() {
       load();
     }, [targetItemPath]);
 
-    const handleUpload = () => {
-      if (!localPath) return;
-      const args = ['upload', localPath, '-db', selectedDb, '--upload_mode', 'new_version', '--target_item_path', targetItemPath];
-      runCmd(args, `Version: ${targetItemPath.split('/').pop()}`, 'upload');
+    const handleStartUpload = () => {
+      if (!uploadPath) { showToast('Select a path to upload', 'error'); return; }
+      if (encryption === 'not_automatic' && !minimize) {
+        if (!password && !randomSeed) { showToast('Provide password or select Random', 'error'); return; }
+        if (randomSeed) {
+          const pass = generateRandomPassword();
+          setGeneratedPassword(pass);
+          setShowPasswordModal(true);
+          return;
+        }
+      }
+      proceedWithUpload(password);
+    };
+    const proceedWithUpload = (finalPassword) => {
+      const enc = minimize && encryption === 'not_automatic' ? 'automatic' : encryption;
+      const args = [
+        'upload', uploadPath, '-db', selectedDb,
+        '--encryption_mode', enc,
+        '--target_item_path', targetItemPath, '--upload_mode', 'new_version'
+      ];
+      if (config?.discord?.channel_id) args.push('-c', String(config.discord.channel_id));
+      if (enc === 'not_automatic' && finalPassword) args.push('--password_seed', finalPassword);
+      if (uploadName) args.push('--upload_name', uploadName);
+      if (newVersionString) args.push('--new_version_string', newVersionString);
+      if (strictnessMode !== 'NA') args.push('--strictness_mode', strictnessMode);
+      if (chunkSizeMb) args.push('--chunk_size_mb', chunkSizeMb);
+      if (minimize) args.push('--minimize', 'yes');
+      if (!nameCheck) args.push('--no_name_check');
+      if (additionMode) { args.push('--addition'); if (sourceVersion) args.push('--source_version', sourceVersion); }
+      args.push('--save_hash', encryption === 'not_automatic' && zeroKnowledge ? 'False' : 'True');
+      runCmd(args, uploadPath.split(/[/\\]/).pop(), 'upload');
       setModal(null);
     };
 
@@ -655,9 +1160,10 @@ export default function App() {
     );
   };
 
-  const ModifyModalContent = ({ type, item, onConfirm }) => {
-    const [newName, setNewName] = useState(item.displayName);
+  const ModifyModalContent = ({ type, items, item, onConfirm }) => {
+    const currentItems = items || (item ? [item] : []);
     const [destination, setDestination] = useState('.');
+    const [newName, setNewName] = useState(currentItems.length === 1 ? currentItems[0].displayName : '');
     const [copyMode, setCopyMode] = useState(false);
     const [nameMode, setNameMode] = useState('D');
 
@@ -665,30 +1171,31 @@ export default function App() {
       if (type === 'move') {
         onConfirm({
           type: 'move',
-          src: item.itemid || (currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`),
+          items: currentItems,
           dst: destination,
           copyMode,
-          srcIdBased: !!item.itemid,
-          dstIdBased: false,
-          nameCheck: true
+          nameCheck,
+          dstIdBased: false
         });
       } else {
         onConfirm({
           type: 'rename',
-          item: item.itemid || (currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`),
-          newName: newName.trim(),
+          item: currentItems[0],
+          newName,
           nameMode,
-          idBased: !!item.itemid,
-          nameCheck: true
+          nameCheck,
+          idBased: !!currentItems[0].itemid
         });
       }
     };
 
     return (
-      <div className="space-y-6">
-        <div className="p-4 bg-[#060d1a] rounded-2xl border border-[#1a3a5c]">
-          <p className="text-xs text-gray-500">Source:</p>
-          <p className="text-sm text-white truncate">{item.displayName}</p>
+      <div className="space-y-4">
+        <div className="bg-[#060d1a] p-3 rounded-lg border border-[#1a3a5c]">
+          <p className="text-xs text-gray-500">{currentItems.length > 1 ? `Source Items (${currentItems.length})` : 'Source:'}</p>
+          <p className="text-sm text-white truncate">
+            {currentItems.length > 1 ? `${currentItems.length} items selected` : currentItems[0].displayName}
+          </p>
         </div>
 
         {type === 'rename' ? (
@@ -710,6 +1217,107 @@ export default function App() {
                 ))}
               </div>
             </div>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={nameCheck} onChange={e => setNameCheck(e.target.checked)} className="accent-[#3bb5ff]" /><span className="text-sm">Name Check</span></label>
+          </>
+        )}
+        <div className="flex justify-end gap-3 pt-4 border-t border-[#1a3a5c]">
+          <button onClick={() => onConfirm(null)} className="px-4 py-2 text-sm text-gray-400">Cancel</button>
+          <button onClick={handleSubmit} className="px-6 py-2 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-lg font-bold">Confirm {type}</button>
+        </div>
+      </div>
+    );
+  };
+
+  const MakeFolderModalContent = () => {
+    const [folderName, setFolderName] = useState('');
+    const [parent, setParent] = useState(currentPath);
+    const [showPicker, setShowPicker] = useState(false);
+    if (showPicker) return <ArchiveFolderPicker selectedDb={selectedDb} onSelect={p => { setParent(p); setShowPicker(false); }} onCancel={() => setShowPicker(false)} initialPath={parent} />;
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          <input type="text" value={parent} onChange={e => setParent(e.target.value)} className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm" />
+          <button onClick={() => setShowPicker(true)} className="px-4 py-3 bg-[#0f1f3a] border border-[#1a3a5c] rounded-xl text-[#3bb5ff]">Browse</button>
+        </div>
+        <input type="text" value={folderName} onChange={e => setFolderName(e.target.value)} placeholder="Folder name" maxLength={60} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm" />
+        <button onClick={async () => {
+          if (!folderName.trim()) return;
+          try {
+            await fetch('/api/folders/make', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: selectedDb, folder_name: folderName.trim(), parent_path: parent || '.', id_based: false }) });
+            showToast('Folder created', 'success');
+            setModal(null);
+            fetchFiles(currentPath);
+          } catch (e) { showToast(e.message, 'error'); }
+        }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold">Create</button>
+      </div>
+    );
+  };
+
+  const UploadForm = () => {
+    const [localPaths, setLocalPaths] = useState([]);
+    const [showPicker, setShowPicker] = useState(false);
+    const [encryption, setEncryption] = useState('automatic');
+    const [password, setPassword] = useState('');
+    const [randomSeed, setRandomSeed] = useState(false);
+    const [zeroKnowledge, setZeroKnowledge] = useState(false);
+    const [uploadName, setUploadName] = useState('');
+    const [newVersionString, setNewVersionString] = useState('');
+    const [strictness, setStrictness] = useState('NA');
+    const [chunkSize, setChunkSize] = useState('');
+    const [minimize, setMinimize] = useState(false);
+    const [nameCheck, setNameCheck] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
+
+    const genPass = () => {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
+      return Array.from(crypto.getRandomValues(new Uint32Array(24))).map(x => chars[x % chars.length]).join('');
+    };
+
+    const startUpload = () => {
+      if (localPaths.length === 0) { showToast('Select at least one file/folder', 'error'); return; }
+      let finalPassword = password;
+      if (encryption === 'not_automatic' && !minimize) {
+        if (!password && !randomSeed) { showToast('Provide password or select Random', 'error'); return; }
+      }
+      if (encryption === 'not_automatic' && randomSeed && !showPassword) {
+        const p = genPass();
+        setPassword(p);
+        setShowPassword(true);
+        return;
+      }
+      localPaths.forEach(path => {
+        const enc = minimize && encryption === 'not_automatic' ? 'automatic' : encryption;
+        const args = ['upload', path, '-db', selectedDb, '--encryption_mode', enc];
+        if (config?.discord?.channel_id) args.push('-c', String(config.discord.channel_id));
+        if (enc === 'not_automatic' && finalPassword) args.push('--password_seed', finalPassword);
+        if (uploadName) args.push('--upload_name', uploadName);
+        if (newVersionString) args.push('--new_version_string', newVersionString);
+        if (strictness !== 'NA') args.push('--strictness_mode', strictness);
+        if (chunkSize) args.push('--chunk_size_mb', chunkSize);
+        if (minimize) args.push('--minimize', 'yes');
+        if (!nameCheck) args.push('--no_name_check');
+        args.push('--save_hash', encryption === 'not_automatic' && zeroKnowledge ? 'False' : 'True');
+        runCmd(args, path.split(/[/\\]/).pop(), 'upload');
+      });
+      setBottomSheet(null);
+      showToast(`${localPaths.length} upload(s) queued`, 'success');
+    };
+
+    if (showPicker) return <RemoteFolderPicker initialPath="" showFiles multiSelect onSelect={p => { setLocalPaths(p); if (p.length > 1) setUploadName(''); setShowPicker(false); }} onCancel={() => setShowPicker(false)} />;
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          <div className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-gray-400 truncate">{localPaths.length ? localPaths.map(p => p.split(/[/\\]/).pop()).join(', ') : 'No files selected'}</div>
+          <button onClick={() => setShowPicker(true)} className="px-4 py-3 bg-[#0f1f3a] border border-[#1a3a5c] rounded-xl text-[#3bb5ff] btn-touch">Browse</button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[10px] text-gray-500 uppercase">Encryption</label>
+            <select value={encryption} onChange={e => setEncryption(e.target.value)} disabled={minimize} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm">
+              <option value="automatic">Automatic</option>
+              <option value="off">Off</option>
+              <option value="not_automatic">Password</option>
+            </select>
           </div>
         ) : (
           <div className="space-y-4">
@@ -732,6 +1340,58 @@ export default function App() {
           <button onClick={() => onConfirm(null)} className="flex-1 py-4 bg-[#0f1f3a] text-gray-400 rounded-2xl font-bold uppercase tracking-widest text-[10px]">Cancel</button>
           <button onClick={handleConfirm} className="flex-1 py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-[10px]">Confirm</button>
         </div>
+        <input type="number" step="0.1" value={chunkSize} onChange={e => setChunkSize(e.target.value)} placeholder="Chunk size MB (auto)" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm" />
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2"><input type="checkbox" checked={nameCheck} onChange={e => setNameCheck(e.target.checked)} className="accent-[#3bb5ff]" /><span className="text-xs">Name Check</span></label>
+          <label className="flex items-center gap-2"><input type="checkbox" checked={minimize} onChange={e => setMinimize(e.target.checked)} className="accent-[#3bb5ff]" /><span className="text-xs">Minimize</span></label>
+          {encryption === 'not_automatic' && <label className="flex items-center gap-2"><input type="checkbox" checked={zeroKnowledge} onChange={e => setZeroKnowledge(e.target.checked)} disabled={minimize} className="accent-[#3bb5ff]" /><span className="text-xs">Zero‑Knowledge</span></label>}
+        </div>
+
+        {!selectedDb && (
+          <div className="p-3 bg-red-900/20 border border-red-500/30 rounded-xl flex items-center gap-2">
+            <span className="text-red-400">{Ico.alert}</span>
+            <p className="text-[10px] text-red-300 font-bold uppercase">No Volume Selected! Go to "Volumes" tab and open one first.</p>
+          </div>
+        )}
+
+        <button onClick={startUpload} disabled={localPaths.length === 0 || !selectedDb} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold btn-touch disabled:opacity-40">Queue Upload</button>
+      </div>
+    );
+  };
+
+  const PasswordPromptModalContent = ({ items: pwdItems, onConfirm }) => {
+    const [passwords, setPasswords] = useState({});
+
+    const groupedItems = pwdItems.reduce((acc, item) => {
+      const key = item.hash || item.id;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+
+    const handleChange = (groupId, val) => {
+      setPasswords(prev => {
+        const next = { ...prev };
+        groupedItems[groupId].forEach(item => {
+          next[item.id] = val;
+        });
+        return next;
+      });
+    };
+
+    return (
+      <div className="space-y-4">
+        {Object.entries(groupedItems).map(([groupId, itemsInGroup]) => (
+          <div key={groupId} className="bg-[#0a1628] rounded-xl p-3 border border-[#1a3a5c]">
+            <div className="max-h-24 overflow-y-auto mb-2 space-y-1">
+              {itemsInGroup.map(item => (
+                <div key={item.id} className="text-xs text-gray-400 truncate">{item.name}</div>
+              ))}
+            </div>
+            <input type="password" placeholder="Enter password..." onChange={e => handleChange(groupId, e.target.value)} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-[#3bb5ff]" />
+          </div>
+        ))}
+        <button onClick={() => onConfirm(passwords)} className="w-full py-3 bg-[#3bb5ff] text-[#060d1a] rounded-xl font-bold">Download</button>
       </div>
     );
   };
@@ -800,6 +1460,214 @@ export default function App() {
     );
   };
 
+  const SharablesModalContent = () => {
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [currentPath, setCurrentPath] = useState('');
+    const [viewMode, setViewMode] = useState('sharables');
+
+    const fetchSharables = async () => {
+      setLoading(true);
+      try {
+        const r = await fetch('/api/dbs/list_sharables');
+        const data = await r.json();
+        setItems(data.items || []);
+        setCurrentPath(data.path || 'src/SHARABLES');
+      } catch (e) { showToast('Failed to load sharables', 'error'); }
+      setLoading(false);
+    };
+
+    const fetchDirectory = async (path = '') => {
+      setLoading(true);
+      try {
+        const r = await fetch(`/api/fs/browse?path=${encodeURIComponent(path)}`);
+        const data = await r.json();
+        setCurrentPath(data.current_path);
+        setItems(data.items.map(item => ({ ...item, is_vov: item.name.toLowerCase().endsWith('.vov') })));
+      } catch (e) { showToast('Failed to browse directory', 'error'); }
+      setLoading(false);
+    };
+
+    const goHome = async () => {
+      try { const r = await fetch('/api/fs/home'); const d = await r.json(); fetchDirectory(d.path); } catch (e) { fetchDirectory(''); }
+    };
+
+    useEffect(() => {
+      if (viewMode === 'sharables') fetchSharables();
+      else fetchDirectory('');
+    }, [viewMode]);
+
+    const handleImport = (path, isEncrypted) => {
+      if (isEncrypted) {
+        setPasswordModal({ open: true, path, password: '', error: '' });
+      } else {
+        doImport(path, null);
+      }
+    };
+
+    const handleItemClick = (item) => {
+      if (item.is_dir) fetchDirectory(item.path);
+      else if (item.is_vov) handleImport(item.path, item.is_encrypted);
+    };
+
+    const tabs = [
+      { id: 'browse', label: 'System Browser', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg> },
+      { id: 'sharables', label: 'src/SHARABLES', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" /></svg> },
+    ];
+
+    return (
+      <div className="-mx-4 -mt-4">
+        <div className="flex gap-1 p-2 bg-[#060d1a] border-b border-[#1a3a5c]">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setViewMode(t.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-[9px] font-bold uppercase tracking-wide transition-all btn-touch ${viewMode === t.id ? 'bg-[#3bb5ff] text-[#0a1628]' : 'text-gray-400 hover:text-white hover:bg-[#0f1f3a]'}`}
+            >
+              {t.icon}
+              <span className="truncate">{t.label}</span>
+            </button>
+          ))}
+        </div>
+        {viewMode !== 'sharables' && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-[#060d1a]/60 border-b border-[#1a3a5c]">
+            <button onClick={goHome} className="p-1 btn-touch text-[#3bb5ff] hover:bg-[#1a3a5c] rounded-lg flex-shrink-0">{Ico.home}</button>
+            <span className="text-[10px] text-gray-500 font-mono truncate flex-1 opacity-70">{currentPath || '/'}</span>
+          </div>
+        )}
+        <div className="overflow-y-auto px-3 pt-2 pb-1 space-y-1" style={{ maxHeight: '50vh' }}>
+          {loading ? (
+            <div className="text-center py-12 text-gray-500 text-sm">Loading...</div>
+          ) : items.filter(item => item.is_dir || item.is_vov).length === 0 ? (
+            <div className="text-center py-12 text-gray-500 italic text-sm">No suitable files found.</div>
+          ) : (
+            items.filter(item => item.is_dir || item.is_vov).map(item => (
+              <div
+                key={item.path}
+                onClick={() => handleItemClick(item)}
+                className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer btn-touch ${item.is_vov ? 'hover:bg-[#3bb5ff]/10 border-transparent hover:border-[#3bb5ff]/20' : 'hover:bg-[#0f1f3a] border-transparent'}`}
+              >
+                <span className="flex-shrink-0">
+                  {item.is_dir ? <span className="text-[#3bb5ff]/60">{Ico.folder}</span> : (
+                    <div className="relative">
+                      <span className="text-[#3bb5ff]">{Ico.cube}</span>
+                      {item.is_encrypted && (
+                        <span className="absolute -top-1 -right-1 text-[10px]">🔒</span>
+                      )}
+                    </div>
+                  )}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm truncate ${item.is_vov ? 'text-gray-200' : 'text-gray-400'}`}>{item.name}</div>
+                  <div className="text-[10px] text-gray-500 font-mono opacity-50">
+                    {item.is_dir ? 'Directory' : item.is_vov ? 'Vault Opus Volume' : 'File'}
+                  </div>
+                </div>
+                {item.is_vov && (
+                  <span className="text-[9px] font-bold text-[#3bb5ff]/60 uppercase tracking-widest px-2 py-1 rounded bg-[#3bb5ff]/5 border border-[#3bb5ff]/10 flex-shrink-0">
+                    {item.is_encrypted ? '🔒 Import' : 'Import'}
+                  </span>
+                )}
+                {item.is_dir && <span className="text-gray-600 flex-shrink-0">{Ico.back}</span>}
+              </div>
+            ))
+          )}
+        </div>
+        <div className="px-3 py-2 border-t border-[#1a3a5c]">
+          <p className="text-[10px] text-gray-600 italic text-center">Tap a .vov package to import it into your workspace.</p>
+        </div>
+      </div>
+    );
+  };
+
+  const RenameVolumeModalContent = ({ db }) => {
+    const [newName, setNewName] = useState(db.replace(/\.db$/i, ''));
+    const [error, setError] = useState('');
+    const [saving, setSaving] = useState(false);
+    const handleRename = async () => {
+      const trimmed = newName.trim();
+      if (!trimmed) { setError('Name cannot be empty'); return; }
+      const finalName = trimmed.endsWith('.db') ? trimmed : `${trimmed}.db`;
+      if (finalName === db) { setModal(null); return; }
+      setSaving(true); setError('');
+      try {
+        const res = await fetch('/api/dbs/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ old_name: db, new_name: finalName }) });
+        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Rename failed'); }
+        setDbs(prev => prev.map(d => d === db ? finalName : d));
+        if (selectedDb === db) setSelectedDb(finalName);
+        updateRecentVolumes(prev => prev.map(d => d === db ? finalName : d));
+        setExternalVolumes(prev => { const u = prev.map(d => d === db ? finalName : d); localStorage.setItem('mob_externalVolumes', JSON.stringify(u)); return u; });
+        showToast('Volume renamed', 'success');
+        setModal(null);
+      } catch (e) { setError(e.message); }
+      finally { setSaving(false); }
+    };
+    return (
+      <div className="space-y-4">
+        <div>
+          <label className="text-[10px] text-gray-500 uppercase mb-1 block">New Volume Name</label>
+          <input type="text" value={newName} onChange={e => { setNewName(e.target.value); setError(''); }}
+            className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-gray-200 focus:border-[#3bb5ff] outline-none" autoFocus />
+          {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+          <p className="text-[10px] text-gray-600 mt-1">.db extension added automatically if omitted</p>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button onClick={() => setModal(null)} className="flex-1 py-3 bg-[#0f1f3a] text-gray-300 rounded-xl border border-[#1a3a5c] btn-touch text-sm">Cancel</button>
+          <button onClick={handleRename} disabled={saving} className="flex-1 py-3 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl font-bold btn-touch text-sm disabled:opacity-50">
+            {saving ? 'Renaming…' : 'Save Name'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const NukeModalContent = ({ db }) => {
+    const [confirm, setConfirm] = useState('');
+    const execute = async () => {
+      try {
+        await fetch('/api/dbs/nuke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: db }) });
+        showToast(`Volume ${db} has been wiped`, 'success');
+        setModal(null);
+        if (selectedDb === db) fetchFiles('.');
+      } catch (e) { showToast(e.message, 'error'); }
+    };
+    return (
+      <div className="space-y-4">
+        <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-xl">
+          <p className="text-sm text-red-400 font-bold">☢️ NUKE VOLUME ☢️</p>
+          <p className="text-xs text-gray-300 mt-1">All data in <span className="text-white">{db}</span> will be permanently deleted. The file remains but empty.</p>
+        </div>
+        <input type="text" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder='Type "NUKE" to confirm' className="w-full bg-[#060d1a] border border-red-900/50 rounded-xl px-4 py-3 text-sm" />
+        <button onClick={execute} disabled={confirm !== 'NUKE'} className="w-full py-4 bg-red-600 disabled:opacity-30 text-white rounded-xl font-bold">EXECUTE NUKE</button>
+      </div>
+    );
+  };
+
+  const ItemOptionsMenu = ({ items }) => {
+    const isSingle = items.length === 1;
+    const item = isSingle ? items[0] : null;
+    return (
+      <div className="space-y-2">
+        {isSingle && (
+          <>
+            <button onClick={() => { setBottomSheet(null); setModal({ title: 'New Version', content: <NewVersionUploadModalContent targetItemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} onUpload={() => { }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.plus} Upload New Version</button>
+            <button onClick={() => { setBottomSheet(null); setModal({ title: 'Versions', content: <SeeVersionsModalContent itemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} onClose={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.clock} See Versions</button>
+            <button onClick={() => { setBottomSheet(null); setModal({ title: 'Download Version', content: <DownloadVersionModalContent itemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} item={item} onDownload={(args) => { if (args) { const isEncrypted = item && (item.encryption === 'not_automatic' || item.encryption_mode === 'not_automatic'); if (isEncrypted) { setModal({ title: 'Passwords Required', content: <PasswordPromptModalContent items={[{ id: item.itemid, name: item.displayName, hash: item.password_seed_hash || '' }]} onConfirm={(passwords) => { setModal(null); const finalArgs = [...args]; if (Object.keys(passwords).length) { finalArgs.push('--passwords', JSON.stringify(passwords)); } runCmd(finalArgs, item.displayName, 'download'); showToast('Download queued', 'success'); }} /> }); } else { runCmd(args, item.displayName, 'download'); setModal(null); showToast('Download queued', 'success'); } } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.download} Download Version</button>
+          </>
+        )}
+        <button onClick={() => { setBottomSheet(null); setModal({ title: 'Move / Copy', content: <ModifyModalContent type="move" items={items} onConfirm={(data) => { if (data) { const argsBase = ['modify', data.type]; const itemsToProcess = data.items || []; itemsToProcess.forEach(it => { const args = [...argsBase]; const itId = it.itemid || (currentPath === '.' ? it.displayName : `${currentPath}/${it.displayName}`); args.push(itId, data.dst); if (data.copyMode) args.push('--copy'); if (it.itemid) args.push('--src_id_based'); if (data.dstIdBased) args.push('--dst_id_based'); args.push('-db', selectedDb); if (!data.nameCheck) args.push('--no_name_check'); runCmd(args, it.displayName, data.type); }); setModal(null); showToast(`${data.type} queued`, 'success'); } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.move} Move / Copy</button>
+        {isSingle && (
+          <>
+            <button onClick={() => { setBottomSheet(null); setModal({ title: 'Rename', content: <ModifyModalContent type="rename" items={items} onConfirm={(data) => { if (data) { const args = ['modify', data.type]; args.push(data.item.itemid || (currentPath === '.' ? data.item.displayName : `${currentPath}/${data.item.displayName}`), data.newName); if (data.nameMode !== 'D') args.push('--mode', data.nameMode); args.push('-db', selectedDb); if (data.idBased) args.push('--id_based'); if (!data.nameCheck) args.push('--no_name_check'); runCmd(args, data.item.displayName, 'rename'); setModal(null); showToast('Rename queued', 'success'); } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.rename} Rename</button>
+            <button onClick={() => { setBottomSheet(null); setModal({ title: 'Delete Item', content: <DeleteModalContent singleItem={item} onConfirm={(opts) => { const a = ['delete']; if (item.itemid) a.push(item.itemid, '--id_based'); else a.push(currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`); a.push('-db', selectedDb, '--skip_confirmation', 'yes'); if (opts.type === 'hard') a.push('--hard'); if (opts.scope === 'all') a.push('--all_versions', 'yes'); else if (opts.scope === 'specific' && opts.version) a.push('--version', opts.version); else if (opts.scope === 'range' && opts.startVersion && opts.endVersion) a.push('--st_version', opts.startVersion, '--en_version', opts.endVersion); runCmd(a, item.displayName, 'delete'); setModal(null); clearSelection(); showToast('Delete queued', 'success'); }} onCancel={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/20 border border-red-900/30 rounded-xl text-sm text-red-400 btn-touch">{Ico.trash} Delete</button>
+            <button onClick={() => { setBottomSheet(null); setModal({ title: 'Full Name Metadata', content: <FullNameModalContent item={item} onClose={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.info} Show Full Name</button>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // -------------------- RENDER --------------------
   const CreateVolumeModalContent = () => {
     const [name, setName] = useState('');
     const [error, setError] = useState('');
@@ -1095,33 +1963,144 @@ export default function App() {
         )}
       </div>
 
-      {/* FAB - Action Floating Button */}
-      {tab === 'explorer' && selectedDb && (
-        <button onClick={() => setBottomSheet({ title: 'New Upload', content: <div className="space-y-4"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">Select source to upload:</p><button onClick={() => setModal({ title: 'Pick Source', content: <RemoteFolderPicker multiSelect onSelect={paths => { paths.forEach(p => runCmd(['upload', p, '-db', selectedDb], p.split('/').pop(), 'upload')); setModal(null); setBottomSheet(null); }} onCancel={() => setModal(null)} /> })} className="w-full flex items-center justify-between p-5 bg-[#0f1f3a] rounded-3xl border border-[#1a3a5c] group active:border-[#3bb5ff] transition-all"><div className="flex items-center gap-4 text-[#3bb5ff]">{Ico.plus}<span className="text-sm font-bold uppercase tracking-widest text-white">Choose from device</span></div>{Ico.chevronRight}</button></div> })}
-          className="fixed bottom-32 right-6 w-16 h-16 bg-gradient-to-br from-[#006fbe] to-[#3bb5ff] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#3bb5ff]/40 z-40 active:scale-90 transition-transform text-[#0a1628]"
-        >
-          {Ico.plus}
-        </button>
-      )}
-
-      {/* Bottom Selection Bar */}
       {selectedItems.length > 0 && (
         <div className="fixed bottom-24 left-4 right-4 bg-[#0a1628]/95 backdrop-blur-xl border border-[#3bb5ff]/40 px-6 py-4 rounded-3xl flex items-center justify-between z-40 shadow-2xl">
-          <span className="text-xs text-[#3bb5ff] font-black uppercase">{selectedItems.length === 1 ? '1 SELECTED' : `${selectedItems.length} SELECTED`}</span>
+          <span className="text-xs text-[#3bb5ff] font-black uppercase">{selectedItems.length} SELECTED</span>
           <div className="flex gap-4">
-            <button onClick={() => setBottomSheet({ title: 'Batch Options', content: (
-              <div className="space-y-2">
-                <button onClick={() => { setBottomSheet(null); setModal({ title: 'Move / Copy', content: <ModifyModalContent type="move" items={selectedItems} item={selectedItems[0]} onConfirm={(data) => { if (data) { const argsBase = ['modify', data.type]; (data.items || [data.item]).forEach(it => { const args = [...argsBase]; const itId = it.itemid || (currentPath === '.' ? it.displayName : `${currentPath}/${it.displayName}`); args.push(itId, data.dst); if (data.copyMode) args.push('--copy'); if (it.itemid) args.push('--src_id_based'); if (data.dstIdBased) args.push('--dst_id_based'); args.push('-db', selectedDb); runCmd(args, it.displayName, data.type); }); setModal(null); showToast(`${data.type} queued`, 'success'); clearSelection(); } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.move} Move / Copy Batch</button>
-                <button onClick={() => { setBottomSheet(null); setModal({ title: 'Delete Items', content: <DeleteModalContent onConfirm={(opts) => { selectedItems.forEach(item => { const a = ['delete']; if (item.itemid) a.push(item.itemid, '--id_based'); else a.push(currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`); a.push('-db', selectedDb, '--skip_confirmation', 'yes'); if (opts.type === 'hard') a.push('--hard'); if (opts.scope === 'all') a.push('--all_versions', 'yes'); runCmd(a, item.displayName, 'delete'); }); setModal(null); clearSelection(); showToast('Deletion batch queued', 'success'); }} onCancel={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/20 border border-red-900/30 rounded-xl text-sm text-red-400 btn-touch">{Ico.trash} Delete Batch</button>
-              </div>
-            ) })} className="p-3 bg-[#3bb5ff]/10 text-[#3bb5ff] rounded-xl btn-touch">{Ico.menu}</button>
+            <button onClick={() => setBottomSheet({ title: 'Item Options', content: <ItemOptionsMenu items={selectedItems} /> })} className="p-3 bg-[#3bb5ff]/10 text-[#3bb5ff] rounded-xl btn-touch">{Ico.menu}</button>
             <button onClick={clearSelection} className="p-3 text-gray-500 btn-touch hover:text-white">{Ico.close}</button>
           </div>
         </div>
       )}
 
-      {/* Navigation Dock */}
-      <div className="bg-[#0a1628] border-t border-[#1a3a5c] px-6 pt-3 pb-8 flex items-center justify-between z-50">
+  // Download execution helper
+  const executeDownload = (itemsToDownload, strictnessMode = 'NA') => {
+    const needsPassword = (i) => {
+      if (i.encryption === 'not_automatic' || i.encryption_mode === 'not_automatic') return true;
+      if (i.type === 'folder' && Array.isArray(i.versions)) return i.versions.some(v => v.has_hash || v.encryption === 'not_automatic');
+      if (i.password_seed_hash) return true;
+      return false;
+    };
+    const encryptedItems = itemsToDownload.filter(needsPassword);
+    if (encryptedItems.length) {
+      setModal({ title: 'Passwords Required', content: <PasswordPromptModalContent items={encryptedItems.map(i => ({ id: i.itemid, name: i.displayName, hash: i.password_seed_hash || '' }))} onConfirm={(passwords) => { setModal(null); doDownload(itemsToDownload, passwords, strictnessMode); }} /> });
+    } else {
+      doDownload(itemsToDownload, {}, strictnessMode);
+      setModal(null);
+    }
+  };
+  const doDownload = (itemsToDownload, passwords, strictnessMode) => {
+    const downloadFolder = localStorage.getItem('VAULT_OPUS_download_folder') || '/storage/emulated/0/Download';
+    itemsToDownload.forEach(item => {
+      const itemPath = currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`;
+      const args = ['download', itemPath, '-db', selectedDb, '--download_folder', downloadFolder];
+      if (Object.keys(passwords).length) args.push('--passwords', JSON.stringify(passwords));
+      if (strictnessMode !== 'NA') args.push('--strictness_mode', strictnessMode);
+      runCmd(args, item.displayName, 'download');
+    });
+  };
+
+  // Volume tabs
+  const renderVolumes = () => (
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between">
+        <h2 className="text-lg font-bold text-white">Volumes</h2>
+        <div className="flex gap-2">
+          <button onClick={async () => { await fetchDbs(); showToast('Volume list refreshed', 'success'); }} className="p-2 bg-[#0f1f3a] border border-[#1a3a5c] text-gray-300 rounded-xl btn-touch" title="Refresh Volume List">{Ico.version}</button>
+          <button onClick={() => setModal({ title: 'Sharables', content: <SharablesModalContent /> })} className="p-2 bg-[#0f1f3a] border border-[#1a3a5c] text-[#3bb5ff] rounded-xl btn-touch" title="Open Sharables">{Ico.externalLink}</button>
+          <button onClick={() => setShowCreateVolume(true)} className="p-2 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl btn-touch" title="Create Volume">{Ico.plus}</button>
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-6">
+        {recentVolumes.length > 0 && (
+          <section>
+            <div className="flex items-center gap-2 mb-3"><span className="text-[#3bb5ff]/50">{Ico.clock}</span><h3 className="text-[10px] uppercase font-bold text-[#3bb5ff]/50">Recent</h3></div>
+            <div className="space-y-2">{recentVolumes.map(db => (
+              <div key={db} className={`flex items-center justify-between px-4 py-3 rounded-xl border btn-touch ${selectedDb === db ? 'bg-[#3bb5ff]/15 border-[#3bb5ff]' : 'bg-[#0f1f3a]/40 border-[#1a3a5c]'}`}>
+                <div
+                  onClick={() => { if (selectedDb === db) fetchFiles(currentPath); else setSelectedDb(db); setTab('explorer'); }}
+                  className="flex-1 flex items-center gap-3 min-w-0 mr-2 py-1"
+                >
+                  <span className={selectedDb === db ? 'text-[#3bb5ff]' : 'text-gray-500'}>{Ico.cube}</span>
+                  <div className="text-sm font-bold truncate text-white">{db.split(/[\/\\]/).pop().replace('.db', '')}</div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateRecentVolumes(prev => prev.filter(d => d !== db));
+                    if (selectedDb === db) setSelectedDb('');
+                    showToast('Removed', 'success');
+                  }}
+                  className="p-3 -m-1.5 text-gray-600 hover:text-red-400 rounded-lg transition-colors flex-shrink-0"
+                >
+                  {Ico.close}
+                </button>
+              </div>
+            ))}</div>
+          </section>
+        )}
+        <section>
+          <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><span className="text-[#3bb5ff]/50">{Ico.cube}</span><h3 className="text-[10px] uppercase font-bold text-[#3bb5ff]/50">Available</h3></div><button onClick={() => setModal({ title: 'Add External Volume', content: <RemoteFolderPicker showFiles onSelect={p => { if (p.endsWith('.db')) { setExternalVolumes(prev => { const u = [...new Set([...prev, p])]; localStorage.setItem('mob_externalVolumes', JSON.stringify(u)); return u; }); fetchDbs(); setModal(null); showToast('Volume added', 'success'); } else showToast('Must be .db', 'error'); }} onCancel={() => setModal(null)} /> })} className="text-[10px] text-[#3bb5ff] font-bold btn-touch uppercase">+ External</button></div>
+          <div className="space-y-2">{dbs.map(db => (
+            <div key={db} className={`flex items-center justify-between px-4 py-3 rounded-xl border btn-touch ${selectedDb === db ? 'bg-[#3bb5ff]/15 border-[#3bb5ff]' : 'bg-[#0f1f3a]/40 border-[#1a3a5c]'}`}>
+              <div
+                onClick={() => { if (selectedDb === db) fetchFiles(currentPath); else setSelectedDb(db); setTab('explorer'); }}
+                className="flex-1 flex items-center gap-3 min-w-0 mr-2 py-1"
+              >
+                <span className={selectedDb === db ? 'text-[#3bb5ff]' : 'text-gray-500'}>{Ico.cube}</span>
+                <span className="text-sm font-bold text-white truncate">{db.split(/[\/\\]/).pop().replace('.db', '')}</span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setModal({ title: 'Volume Options', content: <VolumeOptionsMenu db={db} /> });
+                }}
+                className="p-3 -m-1.5 text-gray-500 hover:text-white btn-touch"
+              >
+                {Ico.menu}
+              </button>
+            </div>
+          ))}</div>
+        </section>
+        <button onClick={() => setModal({ title: 'Import .vov Package', content: <div className="space-y-3"><RemoteFolderPicker showFiles onSelect={async p => { if (p.endsWith('.vov')) { try { await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vov_path: p }) }); fetchDbs(); showToast('Imported', 'success'); setModal(null); } catch (e) { showToast(e.message, 'error'); } } else showToast('Must select .vov', 'error'); }} onCancel={() => setModal(null)} /></div> })} className="w-full py-4 bg-[#0f1f3a] border border-[#1a3a5c] rounded-2xl text-xs text-gray-300 font-bold uppercase btn-touch flex items-center justify-center gap-2">{Ico.import} Import VOV Package</button>
+      </div>
+    </div>
+  );
+  const renderQueue = () => (
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between"><h2 className="text-lg font-bold text-white">Queue</h2><button onClick={() => setQueue(q => q.filter(i => i.status === 'running' || i.status === 'queued'))} className="text-xs text-gray-400 btn-touch">Clear All</button></div>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">{queue.length === 0 ? <div className="text-center py-20 text-gray-500 text-sm">No active tasks</div> : queue.slice().reverse().map(item => (<div key={item.id} className="flex items-center gap-3 px-3 py-2 bg-[#0a1628] border border-[#1a3a5c] rounded-xl"><div className={`w-2 h-2 rounded-full ${item.status === 'completed' ? 'bg-green-400' : item.status === 'failed' ? 'bg-red-400' : item.status === 'running' ? 'bg-[#3bb5ff] animate-pulse' : 'bg-gray-500'}`} /><div className="flex-1"><div className="text-xs text-gray-200 truncate">{item.name}</div><div className="text-[10px] text-gray-500 capitalize">{item.status}</div></div>{item.progress > 0 && <div className="text-xs text-[#3bb5ff]">{item.progress}%</div>}</div>))}</div>
+    </div>
+  );
+
+  const renderTerminal = () => (
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between"><h2 className="text-lg font-bold text-white">Terminal</h2><button onClick={() => setTerminalOutput('')} className="text-xs text-gray-400 btn-touch">Clear</button></div>
+      <div className="flex-1 overflow-y-auto p-3 bg-[#060d1a]"><pre className="text-xs text-green-400 font-mono whitespace-pre-wrap break-all">{terminalOutput || 'No output yet'}</pre></div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-full safe-top bg-[#060d1a]">
+      <header className="flex items-center justify-between px-6 py-4 bg-[#0a1628] border-b border-[#1a3a5c] shadow-lg">
+        <div className="flex items-center gap-3">
+          <img src="/logo/image.png" alt="Logo" className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(59,181,255,0.4)]" onError={(e) => e.target.style.display = 'none'} />
+          <div><h1 className="text-lg font-black text-white tracking-tighter">VAULT OPUS</h1>{selectedDb && <p className="text-[10px] text-[#3bb5ff] font-bold uppercase mt-1">{selectedDb.replace('.db', '')}</p>}</div>
+        </div>
+        <div className="flex items-center gap-2">
+          {connectionStatus === 'disconnected' && <button onClick={connectWS} className="p-2 text-red-500 btn-touch">{Ico.alert}</button>}
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-hidden relative">
+        {tab === 'explorer' && renderExplorer()}
+        {tab === 'volumes' && renderVolumes()}
+        {tab === 'queue' && renderQueue()}
+        {tab === 'terminal' && renderTerminal()}
+        {tab === 'settings' && <SettingsTabContent config={config} fetchConfig={fetchConfig} showToast={showToast} />}
+      </div>
+
+      <nav className="flex items-center justify-around bg-[#0a1628] border-t border-[#1a3a5c] py-4 safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.4)]">
         {[
           { id: 'explorer', ico: Ico.folder, label: 'FILES' },
           { id: 'volumes', ico: Ico.cube, label: 'VAULTS' },
@@ -1290,6 +2269,80 @@ By downloading, installing, accessing, or using VAULT OPUS in any form (Desktop 
           </div>
         </Modal>
       )}
+      {showTerms && (
+        <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
+          <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
+            <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)] animate-pulse">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#3bb5ff" strokeWidth="2" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            </div>
+
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Our Terms and Policy</h2>
+              <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Please review before proceeding</p>
+            </div>
+
+            <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl overflow-y-auto max-h-[50vh] custom-scrollbar text-left">
+              <MiniMarkdown content={TERMS_AND_CONDITIONS_MARKDOWN} />
+            </div>
+
+            <button
+              onClick={handleAcceptTerms}
+              className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch shadow-lg shadow-[#3bb5ff]/25 border border-[#3bb5ff]/30 cursor-pointer"
+            >
+              I Accept the Terms and Conditions
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showWelcomeVideo && (
+        <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
+          <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
+            <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#3bb5ff" strokeWidth="2" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Setup Tutorial</h2>
+              <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Follow this quick guide to start</p>
+            </div>
+
+            <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl flex flex-col">
+              <p className="text-sm text-gray-200 mb-4 leading-relaxed font-semibold">
+                New here? go and look to this video:
+              </p>
+
+              {/* YouTube Video Embed */}
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-[#1a3a5c] shadow-lg mb-4 bg-black">
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={WELCOME_YOUTUBE_VIDEO_URL}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                ></iframe>
+              </div>
+
+              <p className="text-xs text-gray-400 leading-relaxed text-left font-medium">
+                then to use the requirements you setup. put the token and the channel id in requirements input places in settings. and then go to volumes tab and hit plus button to make a new volume and you would be done
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowWelcomeVideo(false);
+                setTab('settings');
+              }}
+              className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch shadow-lg shadow-[#3bb5ff]/25 border border-[#3bb5ff]/30 cursor-pointer"
+            >
+              I Understand
+            </button>
+          </div>
+        </div>
+      )}
+
+      {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

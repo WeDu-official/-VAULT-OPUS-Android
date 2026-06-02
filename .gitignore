@@ -1,5 +1,11 @@
 # Using Android gitignore template: https://github.com/github/gitignore/blob/HEAD/Android.gitignore
+<<<<<<< HEAD
 /VOD/*
+=======
+/vod*/*
+/VOD*/*
+/vault*/*
+>>>>>>> temp-work
 # Built application files
 *.apk
 *.aar

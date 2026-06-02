@@ -1,9 +1,12 @@
 #---------------------------------------------------------------------
 #server.py (Sandalphon) from the VAULT OPUS PROJECT version 1-R10 (ANDROID MERGE)
+<<<<<<< HEAD
 #by WEDUXOX/WEDUOFFICIAL - https://github.com/WeDu-official
 #I HAD MADE THIS PROJECT FOR FREE FOR ALL
 #from mankind to mankind... if I disappear don't worry it might just be my exams or anything else, but regardless
 #this code will still be here so DO GOOD NO EVIL....good luck :)
+=======
+>>>>>>> temp-work
 #by WEDUXOX/WEDUOFFICIAL - https://github.com/WeDu-official
 #---------------------------------------------------------------------
 import os
@@ -179,6 +182,30 @@ tree_builder = ListFilesTreeBuilder(log=logger)
 formatter = ListFilesFormatter(log=logger)
 
 app = FastAPI(title="VAULT_OPUS Web GUI API")
+
+TERMS_ACCEPTED_FILE = os.path.join(WRITABLE_DIR, "terms_accepted.txt")
+
+def is_terms_accepted():
+    if not os.path.exists(TERMS_ACCEPTED_FILE):
+        return False
+    try:
+        with open(TERMS_ACCEPTED_FILE, 'r') as f:
+            return f.read().strip() == "1"
+    except Exception:
+        return False
+
+@app.get("/api/terms_status")
+async def get_terms_status():
+    return JSONResponse({"accepted": is_terms_accepted()})
+
+@app.post("/api/accept_terms")
+async def accept_terms():
+    try:
+        with open(TERMS_ACCEPTED_FILE, 'w') as f:
+            f.write("1")
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 app.add_middleware(
     CORSMiddleware,
