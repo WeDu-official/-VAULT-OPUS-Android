@@ -422,7 +422,7 @@ export default function App() {
     </div>
   );
 
-const TERMS_AND_CONDITIONS_MARKDOWN = `# VAULT OPUS — TERMS OF SERVICE & PRIVACY POLICY
+  const TERMS_AND_CONDITIONS_MARKDOWN = `# VAULT OPUS — TERMS OF SERVICE & PRIVACY POLICY
 
 **Version 1-R10 | Effective Date: 2026**
 
@@ -494,185 +494,186 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 By clicking "I Accept the Terms and Conditions" you confirm that you have read, understood, and agree to all of the above.`;
 
-const WELCOME_YOUTUBE_VIDEO_URL = "https://www.youtube.com/embed/i9rnTi9l2ww";
+  const WELCOME_YOUTUBE_VIDEO_URL = "https://www.youtube.com/embed/i9rnTi9l2ww";
 
-function parseInlineMarkdown(text) {
-  const parts = [];
-  const regex = /(\*\*.*?\*\*|`.*?`|\[.*?\]\(.*?\)|https?:\/\/[^\s)]+)/g;
-  let lastIndex = 0;
-  let match;
+  function parseInlineMarkdown(text) {
+    const parts = [];
+    const regex = /(\*\*.*?\*\*|`.*?`|\[.*?\]\(.*?\)|https?:\/\/[^\s)]+)/g;
+    let lastIndex = 0;
+    let match;
 
-  while ((match = regex.exec(text)) !== null) {
-    const index = match.index;
-    const matchedText = match[0];
+    while ((match = regex.exec(text)) !== null) {
+      const index = match.index;
+      const matchedText = match[0];
 
-    if (index > lastIndex) {
-      parts.push(text.substring(lastIndex, index));
+      if (index > lastIndex) {
+        parts.push(text.substring(lastIndex, index));
+      }
+
+      if (matchedText.startsWith('**') && matchedText.endsWith('**')) {
+        parts.push(<strong key={index} className="font-extrabold text-white">{matchedText.slice(2, -2)}</strong>);
+      } else if (matchedText.startsWith('`') && matchedText.endsWith('`')) {
+        parts.push(<code key={index} className="bg-[#060d1a] border border-[#1a3a5c] rounded px-1.5 py-0.5 font-mono text-xs text-amber-400">{matchedText.slice(1, -1)}</code>);
+      } else if (matchedText.startsWith('[') && matchedText.includes('](')) {
+        const closingBracket = matchedText.indexOf(']');
+        const label = matchedText.slice(1, closingBracket);
+        const url = matchedText.slice(closingBracket + 2, -1);
+        parts.push(<a key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-[#3bb5ff] hover:underline font-bold">{label}</a>);
+      } else if (matchedText.startsWith('http')) {
+        // Handle bare URL, removing trailing punctuation like periods or commas
+        const url = matchedText.replace(/[.,;]$/, '');
+        parts.push(<a key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-[#3bb5ff] hover:underline font-bold">{url}</a>);
+      }
+
+      lastIndex = regex.lastIndex;
     }
 
-    if (matchedText.startsWith('**') && matchedText.endsWith('**')) {
-      parts.push(<strong key={index} className="font-extrabold text-white">{matchedText.slice(2, -2)}</strong>);
-    } else if (matchedText.startsWith('`') && matchedText.endsWith('`')) {
-      parts.push(<code key={index} className="bg-[#060d1a] border border-[#1a3a5c] rounded px-1.5 py-0.5 font-mono text-xs text-amber-400">{matchedText.slice(1, -1)}</code>);
-    } else if (matchedText.startsWith('[') && matchedText.includes('](')) {
-      const closingBracket = matchedText.indexOf(']');
-      const label = matchedText.slice(1, closingBracket);
-      const url = matchedText.slice(closingBracket + 2, -1);
-      parts.push(<a key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-[#3bb5ff] hover:underline font-bold">{label}</a>);
-    } else if (matchedText.startsWith('http')) {
-      // Handle bare URL, removing trailing punctuation like periods or commas
-      const url = matchedText.replace(/[.,;]$/, '');
-      parts.push(<a key={index} href={url} target="_blank" rel="noopener noreferrer" className="text-[#3bb5ff] hover:underline font-bold">{url}</a>);
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
     }
 
-    lastIndex = regex.lastIndex;
+    return parts.length > 0 ? parts : text;
   }
 
-  if (lastIndex < text.length) {
-    parts.push(text.substring(lastIndex));
-  }
-
-  return parts.length > 0 ? parts : text;
-}
-
-function MiniMarkdown({ content }) {
-  const lines = content.split('\n');
-  return (
-    <div className="space-y-4 text-sm text-gray-300 leading-relaxed font-sans text-left">
-      {lines.map((line, idx) => {
-        if (line.startsWith('# ')) {
-          return <h1 key={idx} className="text-xl font-black text-white mt-6 mb-3 border-b border-[#1a3a5c] pb-2 uppercase tracking-wide">{line.slice(2)}</h1>;
-        }
-        if (line.startsWith('## ')) {
-          return <h2 key={idx} className="text-base font-bold text-[#3bb5ff] mt-5 mb-2 uppercase tracking-wider">{line.slice(3)}</h2>;
-        }
-        if (line.startsWith('### ')) {
-          return <h3 key={idx} className="text-sm font-bold text-white mt-4 mb-2">{line.slice(4)}</h3>;
-        }
-        if (line.trim().startsWith('- ')) {
-          const text = line.trim().slice(2);
-          return (
-            <div key={idx} className="flex items-start gap-2.5 my-1.5 pl-1">
-              <span className="text-[#3bb5ff] mt-1.5 text-[8px]">•</span>
-              <span className="text-gray-300 text-xs flex-1">{parseInlineMarkdown(text)}</span>
-            </div>
-          );
-        }
-        if (line.trim() === '') {
-          return <div key={idx} className="h-1" />;
-        }
-        return <p key={idx} className="text-xs text-gray-400 font-medium">{parseInlineMarkdown(line)}</p>;
-      })}
-    </div>
-  );
-}
-
-// ---------- Main App Component ----------
-export default function App() {
-  // State
-  const [tab, setTab] = useState('explorer');
-  const [dbs, setDbs] = useState([]);
-  const [selectedDb, setSelectedDb] = useState(localStorage.getItem('mob_selectedDb') || '');
-  const [tree, setTree] = useState(null);
-  const [currentPath, setCurrentPath] = useState('.');
-  const [currentVersion, setCurrentVersion] = useState(null);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [ws, setWs] = useState(null);
-  const [terminalOutput, setTerminalOutput] = useState('');
-  const [queue, setQueue] = useState([]);
-  const [config, setConfig] = useState(null);
-  const [promptQueue, setPromptQueue] = useState([]);
-  const [bottomSheet, setBottomSheet] = useState(null);
-  const [modal, setModal] = useState(null);
-  const [showCreateVolume, setShowCreateVolume] = useState(false);
-  const [showSetupModal, setShowSetupModal] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
-  const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
-  const [setupData, setSetupData] = useState({ token: '', channel_id: '', db_name: '' });
-  const [setupStatus, setSetupStatus] = useState({ has_valid_token: false, has_valid_channel: false, has_valid_volume: false });
-  const [newDbName, setNewDbName] = useState('');
-  const [externalVolumes, setExternalVolumes] = useState(() => { const saved = localStorage.getItem('mob_externalVolumes'); return saved ? JSON.parse(saved) : []; });
-  const [recentVolumes, setRecentVolumes] = useState(() => { const saved = localStorage.getItem('mob_recentVolumes'); return saved ? JSON.parse(saved) : []; });
-  const [toast, setToast] = useState(null);
-  const [passwordModal, setPasswordModal] = useState({ open: false, path: '', password: '', error: '' });
-  const [showSharePasswordModal, setShowSharePasswordModal] = useState(false);
-  const [dbToShare, setDbToShare] = useState('');
-  const [connectionStatus, setConnectionStatus] = useState('connecting');
-  const [volumeError, setVolumeError] = useState(null);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const reconnectTimeoutRef = useRef(null);
-  const reconnectAttemptsRef = useRef(0);
-  const retryCountRef = useRef(0);
-  const maxRetries = 10;
-  const retryInterval = 2000;
-
-  const showToast = (msg, type = 'info') => setToast({ message: msg, type, key: Date.now() });
-
-  // Android‑friendly WebSocket with fallback to 127.0.0.1:8000
-
-  const doImport = async (path, password) => {
-    if (passwordModal.error) {
-      setPasswordModal(prev => ({ ...prev, error: '' }));
-      await new Promise(resolve => setTimeout(resolve, 150));
-    }
-    try {
-      const body = { vov_path: path };
-      if (password) body.password = password;
-      const res = await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Import failed');
-      }
-      showToast('Imported successfully', 'success');
-      setPasswordModal({ open: false, path: '', password: '', error: '' });
-      setModal(null);
-      fetchDbs();
-    } catch (error) {
-      if (password !== null && error.message && (error.message.toLowerCase().includes('password') || error.message.toLowerCase().includes('incorrect') || error.message.toLowerCase().includes('mac'))) {
-        setPasswordModal(prev => ({ ...prev, error: 'Incorrect password. Try again.', password: '' }));
-      } else {
-        setPasswordModal({ open: false, path: '', password: '', error: '' });
-        showToast('Import failed: ' + error.message, 'error');
-      }
-    }
-  };
-
-
-  const executeShare = async (password = null) => {
-    setShowSharePasswordModal(false);
-    try {
-      const body = { db_name: dbToShare };
-      if (password) body.password = password;
-      const res = await fetch('/api/dbs/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Failed to package volume');
-      }
-      const data = await res.json();
-      const lockIcon = password ? '🔒 ' : '';
-      setModal({
-        title: password ? '🔒 Volume Packaged' : 'Volume Packaged',
-        content: (
-          <div className="space-y-4">
-            <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-xl">
-              <p className="text-sm text-green-400 font-bold">{lockIcon}📦 Packaged Successfully!</p>
-              <p className="text-xs text-gray-300 mt-2">
-                Volume <span className="text-white font-mono">{dbToShare}</span> packaged successfully!<br />
-                Package: <span className="text-white font-mono">{data.filename}</span><br />
-                Stored in <span className="text-white font-mono">src/SHARABLES</span> folder.
-                {password && <span className="block mt-1 text-amber-300">This package is password-protected.</span>}
-              </p>
-            </div>
-            <button onClick={() => { fetch('/api/dbs/open_sharables', { method: 'POST' }); setModal(null); }} className="w-full py-3 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl font-bold flex items-center justify-center gap-2 btn-touch">{Ico.share} Open src/SHARABLES Folder</button>
-            <button onClick={() => setModal(null)} className="w-full py-3 bg-[#0f1f3a] text-gray-300 rounded-xl text-sm btn-touch">Close</button>
-          </div>
-        ))}
-        <button onClick={() => onConfirm(passwords)} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-xs mt-4 btn-touch">Confirm Passwords</button>
+  function MiniMarkdown({ content }) {
+    const lines = content.split('\n');
+    return (
+      <div className="space-y-4 text-sm text-gray-300 leading-relaxed font-sans text-left">
+        {lines.map((line, idx) => {
+          if (line.startsWith('# ')) {
+            return <h1 key={idx} className="text-xl font-black text-white mt-6 mb-3 border-b border-[#1a3a5c] pb-2 uppercase tracking-wide">{line.slice(2)}</h1>;
+          }
+          if (line.startsWith('## ')) {
+            return <h2 key={idx} className="text-base font-bold text-[#3bb5ff] mt-5 mb-2 uppercase tracking-wider">{line.slice(3)}</h2>;
+          }
+          if (line.startsWith('### ')) {
+            return <h3 key={idx} className="text-sm font-bold text-white mt-4 mb-2">{line.slice(4)}</h3>;
+          }
+          if (line.trim().startsWith('- ')) {
+            const text = line.trim().slice(2);
+            return (
+              <div key={idx} className="flex items-start gap-2.5 my-1.5 pl-1">
+                <span className="text-[#3bb5ff] mt-1.5 text-[8px]">•</span>
+                <span className="text-gray-300 text-xs flex-1">{parseInlineMarkdown(text)}</span>
+              </div>
+            );
+          }
+          if (line.trim() === '') {
+            return <div key={idx} className="h-1" />;
+          }
+          return <p key={idx} className="text-xs text-gray-400 font-medium">{parseInlineMarkdown(line)}</p>;
+        })}
       </div>
+    );
+  }
+
+  // ---------- Main App Component ----------
+  export default function App() {
+    // State
+    const [tab, setTab] = useState('explorer');
+    const [dbs, setDbs] = useState([]);
+    const [selectedDb, setSelectedDb] = useState(localStorage.getItem('mob_selectedDb') || '');
+    const [tree, setTree] = useState(null);
+    const [currentPath, setCurrentPath] = useState('.');
+    const [currentVersion, setCurrentVersion] = useState(null);
+    const [selectedItems, setSelectedItems] = useState([]);
+    const [ws, setWs] = useState(null);
+    const [terminalOutput, setTerminalOutput] = useState('');
+    const [queue, setQueue] = useState([]);
+    const [config, setConfig] = useState(null);
+    const [promptQueue, setPromptQueue] = useState([]);
+    const [bottomSheet, setBottomSheet] = useState(null);
+    const [modal, setModal] = useState(null);
+    const [showCreateVolume, setShowCreateVolume] = useState(false);
+    const [showSetupModal, setShowSetupModal] = useState(false);
+    const [showTerms, setShowTerms] = useState(false);
+    const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
+    const [setupData, setSetupData] = useState({ token: '', channel_id: '', db_name: '' });
+    const [setupStatus, setSetupStatus] = useState({ has_valid_token: false, has_valid_channel: false, has_valid_volume: false });
+    const [newDbName, setNewDbName] = useState('');
+    const [externalVolumes, setExternalVolumes] = useState(() => { const saved = localStorage.getItem('mob_externalVolumes'); return saved ? JSON.parse(saved) : []; });
+    const [recentVolumes, setRecentVolumes] = useState(() => { const saved = localStorage.getItem('mob_recentVolumes'); return saved ? JSON.parse(saved) : []; });
+    const [toast, setToast] = useState(null);
+    const [passwordModal, setPasswordModal] = useState({ open: false, path: '', password: '', error: '' });
+    const [showSharePasswordModal, setShowSharePasswordModal] = useState(false);
+    const [dbToShare, setDbToShare] = useState('');
+    const [connectionStatus, setConnectionStatus] = useState('connecting');
+    const [volumeError, setVolumeError] = useState(null);
+    const [isRetrying, setIsRetrying] = useState(false);
+    const reconnectTimeoutRef = useRef(null);
+    const reconnectAttemptsRef = useRef(0);
+    const retryCountRef = useRef(0);
+    const maxRetries = 10;
+    const retryInterval = 2000;
+
+    const showToast = (msg, type = 'info') => setToast({ message: msg, type, key: Date.now() });
+
+    // Android‑friendly WebSocket with fallback to 127.0.0.1:8000
+
+    const doImport = async (path, password) => {
+      if (passwordModal.error) {
+        setPasswordModal(prev => ({ ...prev, error: '' }));
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      try {
+        const body = { vov_path: path };
+        if (password) body.password = password;
+        const res = await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Import failed');
+        }
+        showToast('Imported successfully', 'success');
+        setPasswordModal({ open: false, path: '', password: '', error: '' });
+        setModal(null);
+        fetchDbs();
+      } catch (error) {
+        if (password !== null && error.message && (error.message.toLowerCase().includes('password') || error.message.toLowerCase().includes('incorrect') || error.message.toLowerCase().includes('mac'))) {
+          setPasswordModal(prev => ({ ...prev, error: 'Incorrect password. Try again.', password: '' }));
+        } else {
+          setPasswordModal({ open: false, path: '', password: '', error: '' });
+          showToast('Import failed: ' + error.message, 'error');
+        }
+      }
+    };
+
+
+    const executeShare = async (password = null) => {
+      setShowSharePasswordModal(false);
+      try {
+        const body = { db_name: dbToShare };
+        if (password) body.password = password;
+        const res = await fetch('/api/dbs/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to package volume');
+        }
+        const data = await res.json();
+        const lockIcon = password ? '🔒 ' : '';
+        setModal({
+          title: password ? '🔒 Volume Packaged' : 'Volume Packaged',
+          content: (
+            <div className="space-y-4">
+              <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-xl">
+                <p className="text-sm text-green-400 font-bold">{lockIcon}📦 Packaged Successfully!</p>
+                <p className="text-xs text-gray-300 mt-2">
+                  Volume <span className="text-white font-mono">{dbToShare}</span> packaged successfully!<br />
+                  Package: <span className="text-white font-mono">{data.filename}</span><br />
+                  Stored in <span className="text-white font-mono">src/SHARABLES</span> folder.
+                  {password && <span className="block mt-1 text-amber-300">This package is password-protected.</span>}
+                </p>
+              </div>
+              <button onClick={() => { fetch('/api/dbs/open_sharables', { method: 'POST' }); setModal(null); }} className="w-full py-3 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl font-bold flex items-center justify-center gap-2 btn-touch">{Ico.share} Open src/SHARABLES Folder</button>
+              <button onClick={() => setModal(null)} className="w-full py-3 bg-[#0f1f3a] text-gray-300 rounded-xl text-sm btn-touch">Close</button>
+            </div>
+          ))
+      }
+        <button onClick={() => onConfirm(passwords)} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-xs mt-4 btn-touch">Confirm Passwords</button>
+      </div >
     );
   };
 
@@ -954,386 +955,386 @@ export default function App() {
       };
       load();
     }, [singleItem]);
-    return (
-      <div className="space-y-6">
-        <div className="flex p-1 bg-[#060d1a] rounded-xl border border-[#1a3a5c]">
-          {['soft', 'hard'].map(t => (
-            <button key={t} onClick={() => setOpts({ ...opts, type: t })} className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${opts.type === t ? 'bg-red-500 text-white' : 'text-gray-500'}`}>{t} Delete</button>
-          ))}
-        </div>
-        {singleItem && versions.length > 1 && (
-          <div className="space-y-4">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Deletion Scope:</p>
-            {['latest', 'all', 'specific', 'range'].map(s => (
-              <label key={s} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${opts.scope === s ? 'bg-[#3bb5ff]/10 border-[#3bb5ff]' : 'bg-[#0f1f3a]/30 border-[#1a3a5c]'}`}>
-                <input type="radio" checked={opts.scope === s} onChange={() => setOpts({ ...opts, scope: s })} className="hidden" />
-                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${opts.scope === s ? 'border-[#3bb5ff]' : 'border-gray-600'}`}>{opts.scope === s && <div className="w-2 h-2 bg-[#3bb5ff] rounded-full" />}</div>
-                <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">{s}</span>
-              </label>
-            ))}
-          </div>
-        )}
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-3 bg-[#0f1f3a] text-gray-400 rounded-xl font-bold uppercase tracking-widest text-[10px]">Cancel</button>
-          <button onClick={() => onConfirm(opts)} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px]">Delete</button>
-        </div>
+  return (
+    <div className="space-y-6">
+      <div className="flex p-1 bg-[#060d1a] rounded-xl border border-[#1a3a5c]">
+        {['soft', 'hard'].map(t => (
+          <button key={t} onClick={() => setOpts({ ...opts, type: t })} className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${opts.type === t ? 'bg-red-500 text-white' : 'text-gray-500'}`}>{t} Delete</button>
+        ))}
       </div>
-    );
-  };
-
-  const DownloadVersionModalContent = ({ itemPath, item, onDownload }) => {
-    const [scope, setScope] = useState('latest');
-    const [version, setVersion] = useState('');
-    const [startVersion, setStartVersion] = useState('');
-    const [endVersion, setEndVersion] = useState('');
-    const [versions, setVersions] = useState([]);
-    useEffect(() => {
-      const load = async () => {
-        try {
-          const r = await fetch(`/api/listfiles?db=${selectedDb}&path=${encodeURIComponent(itemPath)}`);
-          const pathData = await r.json();
-          let itemid = null;
-          if (pathData.results) { const keys = Object.keys(pathData.results); if (keys.length) itemid = keys[0]; }
-          if (!itemid) return;
-          const vr = await fetch(`/api/listfiles?db=${selectedDb}&itemid=${itemid}`);
-          const vd = await vr.json();
-          const vers = [];
-          if (vd.results) { Object.values(vd.results).forEach(i => { if (i.version) vers.push(i.version); }); }
-          setVersions(vers);
-        } catch (e) { }
-      };
-      load();
-    }, [itemPath]);
-
-    const handleConfirm = () => {
-      const args = ['download', itemPath, '-db', selectedDb, '--download_folder', localStorage.getItem('VAULT_OPUS_download_folder') || '/storage/emulated/0/Download'];
-      if (scope === 'specific' && version) args.push('--version', version);
-      else if (scope === 'range' && startVersion && endVersion) args.push('--st_version', startVersion, '--en_version', endVersion);
-      else if (scope === 'all') args.push('--all_versions', 'yes');
-      onDownload(args);
-    };
-
-    return (
-      <div className="space-y-4">
-        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Select versions to download:</p>
-        <div className="space-y-2">
+      {singleItem && versions.length > 1 && (
+        <div className="space-y-4">
+          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Deletion Scope:</p>
           {['latest', 'all', 'specific', 'range'].map(s => (
-            <label key={s} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${scope === s ? 'bg-[#3bb5ff]/10 border-[#3bb5ff]' : 'bg-[#0f1f3a]/30 border-[#1a3a5c]'}`}>
-              <input type="radio" checked={scope === s} onChange={() => setScope(s)} className="hidden" />
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${scope === s ? 'border-[#3bb5ff]' : 'border-gray-600'}`}>{scope === s && <div className="w-2 h-2 bg-[#3bb5ff] rounded-full" />}</div>
+            <label key={s} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${opts.scope === s ? 'bg-[#3bb5ff]/10 border-[#3bb5ff]' : 'bg-[#0f1f3a]/30 border-[#1a3a5c]'}`}>
+              <input type="radio" checked={opts.scope === s} onChange={() => setOpts({ ...opts, scope: s })} className="hidden" />
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${opts.scope === s ? 'border-[#3bb5ff]' : 'border-gray-600'}`}>{opts.scope === s && <div className="w-2 h-2 bg-[#3bb5ff] rounded-full" />}</div>
               <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">{s}</span>
             </label>
           ))}
         </div>
-        {scope === 'specific' && (
-          <select value={version} onChange={e => setVersion(e.target.value)} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-white">
-            <option value="">Select Version</option>
-            {versions.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-        )}
-        {scope === 'range' && (
-          <div className="flex gap-2">
-            <select value={startVersion} onChange={e => setStartVersion(e.target.value)} className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-white">
-              <option value="">Start</option>
-              {versions.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select value={endVersion} onChange={e => setEndVersion(e.target.value)} className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-white">
-              <option value="">End</option>
-              {versions.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
-        )}
-        <button onClick={handleConfirm} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] btn-touch">Start Download</button>
+      )}
+      <div className="flex gap-3">
+        <button onClick={onCancel} className="flex-1 py-3 bg-[#0f1f3a] text-gray-400 rounded-xl font-bold uppercase tracking-widest text-[10px]">Cancel</button>
+        <button onClick={() => onConfirm(opts)} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px]">Delete</button>
       </div>
-    );
+    </div>
+  );
+};
+
+const DownloadVersionModalContent = ({ itemPath, item, onDownload }) => {
+  const [scope, setScope] = useState('latest');
+  const [version, setVersion] = useState('');
+  const [startVersion, setStartVersion] = useState('');
+  const [endVersion, setEndVersion] = useState('');
+  const [versions, setVersions] = useState([]);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch(`/api/listfiles?db=${selectedDb}&path=${encodeURIComponent(itemPath)}`);
+        const pathData = await r.json();
+        let itemid = null;
+        if (pathData.results) { const keys = Object.keys(pathData.results); if (keys.length) itemid = keys[0]; }
+        if (!itemid) return;
+        const vr = await fetch(`/api/listfiles?db=${selectedDb}&itemid=${itemid}`);
+        const vd = await vr.json();
+        const vers = [];
+        if (vd.results) { Object.values(vd.results).forEach(i => { if (i.version) vers.push(i.version); }); }
+        setVersions(vers);
+      } catch (e) { }
+    };
+    load();
+  }, [itemPath]);
+
+  const handleConfirm = () => {
+    const args = ['download', itemPath, '-db', selectedDb, '--download_folder', localStorage.getItem('VAULT_OPUS_download_folder') || '/storage/emulated/0/Download'];
+    if (scope === 'specific' && version) args.push('--version', version);
+    else if (scope === 'range' && startVersion && endVersion) args.push('--st_version', startVersion, '--en_version', endVersion);
+    else if (scope === 'all') args.push('--all_versions', 'yes');
+    onDownload(args);
   };
 
-  const SeeVersionsModalContent = ({ itemPath, onClose }) => {
-    const [versions, setVersions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    useEffect(() => {
-      const load = async () => {
-        try {
-          const r = await fetch(`/api/listfiles?db=${selectedDb}&path=${encodeURIComponent(itemPath)}`);
-          const d = await r.json();
-          let itemid = null;
-          if (d.results) { const keys = Object.keys(d.results); if (keys.length) itemid = keys[0]; }
-          if (!itemid) return;
-          const vr = await fetch(`/api/listfiles?db=${selectedDb}&itemid=${itemid}`);
-          const vd = await vr.json();
-          const vers = [];
-          if (vd.results) { Object.values(vd.results).forEach(i => { if (i.version) vers.push(i.version); }); }
-          setVersions(Object.values(vd.results || {}));
-        } catch (e) { }
-        setLoading(false);
-      };
-      load();
-    }, [itemPath]);
-    return (
-      <div className="space-y-3">
-        {loading ? <div className="text-center py-8 text-gray-500 text-xs animate-pulse font-bold tracking-widest uppercase">Fetching...</div> : versions.map((v, i) => (
-          <div key={i} className="p-4 bg-[#0f1f3a]/50 border border-[#1a3a5c] rounded-2xl">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-black text-[#3bb5ff] uppercase tracking-widest">Version {v.version}</span>
-              <span className="text-[9px] text-gray-500 font-bold">{new Date(v.upload_timestamp).toLocaleString()}</span>
-            </div>
-            <div className="text-[10px] text-gray-400 font-mono break-all opacity-60">ID: {v.itemid}</div>
-          </div>
+  return (
+    <div className="space-y-4">
+      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Select versions to download:</p>
+      <div className="space-y-2">
+        {['latest', 'all', 'specific', 'range'].map(s => (
+          <label key={s} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${scope === s ? 'bg-[#3bb5ff]/10 border-[#3bb5ff]' : 'bg-[#0f1f3a]/30 border-[#1a3a5c]'}`}>
+            <input type="radio" checked={scope === s} onChange={() => setScope(s)} className="hidden" />
+            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${scope === s ? 'border-[#3bb5ff]' : 'border-gray-600'}`}>{scope === s && <div className="w-2 h-2 bg-[#3bb5ff] rounded-full" />}</div>
+            <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">{s}</span>
+          </label>
         ))}
       </div>
-    );
+      {scope === 'specific' && (
+        <select value={version} onChange={e => setVersion(e.target.value)} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-white">
+          <option value="">Select Version</option>
+          {versions.map(v => <option key={v} value={v}>{v}</option>)}
+        </select>
+      )}
+      {scope === 'range' && (
+        <div className="flex gap-2">
+          <select value={startVersion} onChange={e => setStartVersion(e.target.value)} className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-white">
+            <option value="">Start</option>
+            {versions.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select value={endVersion} onChange={e => setEndVersion(e.target.value)} className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-white">
+            <option value="">End</option>
+            {versions.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+      )}
+      <button onClick={handleConfirm} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] btn-touch">Start Download</button>
+    </div>
+  );
+};
+
+const SeeVersionsModalContent = ({ itemPath, onClose }) => {
+  const [versions, setVersions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch(`/api/listfiles?db=${selectedDb}&path=${encodeURIComponent(itemPath)}`);
+        const d = await r.json();
+        let itemid = null;
+        if (d.results) { const keys = Object.keys(d.results); if (keys.length) itemid = keys[0]; }
+        if (!itemid) return;
+        const vr = await fetch(`/api/listfiles?db=${selectedDb}&itemid=${itemid}`);
+        const vd = await vr.json();
+        const vers = [];
+        if (vd.results) { Object.values(vd.results).forEach(i => { if (i.version) vers.push(i.version); }); }
+        setVersions(Object.values(vd.results || {}));
+      } catch (e) { }
+      setLoading(false);
+    };
+    load();
+  }, [itemPath]);
+  return (
+    <div className="space-y-3">
+      {loading ? <div className="text-center py-8 text-gray-500 text-xs animate-pulse font-bold tracking-widest uppercase">Fetching...</div> : versions.map((v, i) => (
+        <div key={i} className="p-4 bg-[#0f1f3a]/50 border border-[#1a3a5c] rounded-2xl">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-black text-[#3bb5ff] uppercase tracking-widest">Version {v.version}</span>
+            <span className="text-[9px] text-gray-500 font-bold">{new Date(v.upload_timestamp).toLocaleString()}</span>
+          </div>
+          <div className="text-[10px] text-gray-400 font-mono break-all opacity-60">ID: {v.itemid}</div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const NewVersionUploadModalContent = ({ targetItemPath, onUpload }) => {
+  const [localPath, setLocalPath] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [versions, setVersions] = useState([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch(`/api/listfiles?db=${selectedDb}&path=${encodeURIComponent(targetItemPath)}`);
+        const d = await r.json();
+        let itemid = null;
+        if (d.results) { const keys = Object.keys(d.results); if (keys.length) itemid = keys[0]; }
+        if (!itemid) return;
+        const vr = await fetch(`/api/listfiles?db=${selectedDb}&itemid=${itemid}`);
+        const vd = await vr.json();
+        const vers = [];
+        if (vd.results) { Object.values(vd.results).forEach(i => { if (i.version) vers.push(i.version); }); }
+        setVersions(vers);
+      } catch (e) { }
+    };
+    load();
+  }, [targetItemPath]);
+
+  const handleStartUpload = () => {
+    if (!uploadPath) { showToast('Select a path to upload', 'error'); return; }
+    if (encryption === 'not_automatic' && !minimize) {
+      if (!password && !randomSeed) { showToast('Provide password or select Random', 'error'); return; }
+      if (randomSeed) {
+        const pass = generateRandomPassword();
+        setGeneratedPassword(pass);
+        setShowPasswordModal(true);
+        return;
+      }
+    }
+    proceedWithUpload(password);
+  };
+  const proceedWithUpload = (finalPassword) => {
+    const enc = minimize && encryption === 'not_automatic' ? 'automatic' : encryption;
+    const args = [
+      'upload', uploadPath, '-db', selectedDb,
+      '--encryption_mode', enc,
+      '--target_item_path', targetItemPath, '--upload_mode', 'new_version'
+    ];
+    if (config?.discord?.channel_id) args.push('-c', String(config.discord.channel_id));
+    if (enc === 'not_automatic' && finalPassword) args.push('--password_seed', finalPassword);
+    if (uploadName) args.push('--upload_name', uploadName);
+    if (newVersionString) args.push('--new_version_string', newVersionString);
+    if (strictnessMode !== 'NA') args.push('--strictness_mode', strictnessMode);
+    if (chunkSizeMb) args.push('--chunk_size_mb', chunkSizeMb);
+    if (minimize) args.push('--minimize', 'yes');
+    if (!nameCheck) args.push('--no_name_check');
+    if (additionMode) { args.push('--addition'); if (sourceVersion) args.push('--source_version', sourceVersion); }
+    args.push('--save_hash', encryption === 'not_automatic' && zeroKnowledge ? 'False' : 'True');
+    runCmd(args, uploadPath.split(/[/\\]/).pop(), 'upload');
+    setModal(null);
   };
 
-  const NewVersionUploadModalContent = ({ targetItemPath, onUpload }) => {
-    const [localPath, setLocalPath] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [versions, setVersions] = useState([]);
+  return (
+    <div className="space-y-4">
+      <div className="p-4 bg-[#3bb5ff]/5 border border-[#3bb5ff]/20 rounded-2xl">
+        <p className="text-[10px] text-[#3bb5ff] font-black uppercase tracking-widest mb-1">Target Item</p>
+        <p className="text-sm font-bold text-white truncate">{targetItemPath.split('/').pop()}</p>
+        <p className="text-[9px] text-gray-500 mt-1 uppercase font-bold">Currently has {versions.length} version(s)</p>
+      </div>
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">New File/Folder Source:</label>
+        <div className="flex gap-2">
+          <input type="text" value={localPath} onChange={e => setLocalPath(e.target.value)} placeholder="Path on device..." className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white focus:border-[#3bb5ff] outline-none" />
+          <button onClick={() => setModal({ title: 'Pick Source', content: <RemoteFolderPicker showFiles onSelect={p => { setLocalPath(p); setModal({ title: 'New Version', content: <NewVersionUploadModalContent targetItemPath={targetItemPath} onUpload={onUpload} /> }); }} onCancel={() => setModal({ title: 'New Version', content: <NewVersionUploadModalContent targetItemPath={targetItemPath} onUpload={onUpload} /> })} /> })} className="p-3 bg-[#0f1f3a] text-[#3bb5ff] rounded-xl border border-[#1a3a5c] btn-touch">{Ico.folderOpen}</button>
+        </div>
+      </div>
+      <button onClick={handleUpload} disabled={!localPath} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] btn-touch disabled:opacity-30">Upload New Version</button>
+    </div>
+  );
+};
 
-    useEffect(() => {
-      const load = async () => {
+const ModifyModalContent = ({ type, items, item, onConfirm }) => {
+  const currentItems = items || (item ? [item] : []);
+  const [destination, setDestination] = useState('.');
+  const [newName, setNewName] = useState(currentItems.length === 1 ? currentItems[0].displayName : '');
+  const [copyMode, setCopyMode] = useState(false);
+  const [nameMode, setNameMode] = useState('D');
+
+  const handleConfirm = () => {
+    if (type === 'move') {
+      onConfirm({
+        type: 'move',
+        items: currentItems,
+        dst: destination,
+        copyMode,
+        nameCheck,
+        dstIdBased: false
+      });
+    } else {
+      onConfirm({
+        type: 'rename',
+        item: currentItems[0],
+        newName,
+        nameMode,
+        nameCheck,
+        idBased: !!currentItems[0].itemid
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-[#060d1a] p-3 rounded-lg border border-[#1a3a5c]">
+        <p className="text-xs text-gray-500">{currentItems.length > 1 ? `Source Items (${currentItems.length})` : 'Source:'}</p>
+        <p className="text-sm text-white truncate">
+          {currentItems.length > 1 ? `${currentItems.length} items selected` : currentItems[0].displayName}
+        </p>
+      </div>
+
+      {type === 'rename' ? (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">New Name:</label>
+            <input autoFocus type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white focus:border-[#3bb5ff] outline-none" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Rename Mode:</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: 'D', label: 'Display Only' },
+                { id: 'N', label: 'Internal Only' },
+                { id: 'B', label: 'Both' },
+                { id: 'A', label: 'Smart Auto' }
+              ].map(m => (
+                <button key={m.id} onClick={() => setNameMode(m.id)} className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${nameMode === m.id ? 'bg-[#3bb5ff]/20 border-[#3bb5ff] text-[#3bb5ff]' : 'bg-[#0f1f3a]/50 border-[#1a3a5c] text-gray-500'}`}>{m.label}</button>
+              ))}
+            </div>
+          </div>
+          <label className="flex items-center gap-2"><input type="checkbox" checked={nameCheck} onChange={e => setNameCheck(e.target.checked)} className="accent-[#3bb5ff]" /><span className="text-sm">Name Check</span></label>
+        </>
+      )}
+      <div className="flex justify-end gap-3 pt-4 border-t border-[#1a3a5c]">
+        <button onClick={() => onConfirm(null)} className="px-4 py-2 text-sm text-gray-400">Cancel</button>
+        <button onClick={handleSubmit} className="px-6 py-2 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-lg font-bold">Confirm {type}</button>
+      </div>
+    </div>
+  );
+};
+
+const MakeFolderModalContent = () => {
+  const [folderName, setFolderName] = useState('');
+  const [parent, setParent] = useState(currentPath);
+  const [showPicker, setShowPicker] = useState(false);
+  if (showPicker) return <ArchiveFolderPicker selectedDb={selectedDb} onSelect={p => { setParent(p); setShowPicker(false); }} onCancel={() => setShowPicker(false)} initialPath={parent} />;
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input type="text" value={parent} onChange={e => setParent(e.target.value)} className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm" />
+        <button onClick={() => setShowPicker(true)} className="px-4 py-3 bg-[#0f1f3a] border border-[#1a3a5c] rounded-xl text-[#3bb5ff]">Browse</button>
+      </div>
+      <input type="text" value={folderName} onChange={e => setFolderName(e.target.value)} placeholder="Folder name" maxLength={60} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm" />
+      <button onClick={async () => {
+        if (!folderName.trim()) return;
         try {
-          const r = await fetch(`/api/listfiles?db=${selectedDb}&path=${encodeURIComponent(targetItemPath)}`);
-          const d = await r.json();
-          let itemid = null;
-          if (d.results) { const keys = Object.keys(d.results); if (keys.length) itemid = keys[0]; }
-          if (!itemid) return;
-          const vr = await fetch(`/api/listfiles?db=${selectedDb}&itemid=${itemid}`);
-          const vd = await vr.json();
-          const vers = [];
-          if (vd.results) { Object.values(vd.results).forEach(i => { if (i.version) vers.push(i.version); }); }
-          setVersions(vers);
-        } catch (e) { }
-      };
-      load();
-    }, [targetItemPath]);
+          await fetch('/api/folders/make', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: selectedDb, folder_name: folderName.trim(), parent_path: parent || '.', id_based: false }) });
+          showToast('Folder created', 'success');
+          setModal(null);
+          fetchFiles(currentPath);
+        } catch (e) { showToast(e.message, 'error'); }
+      }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold">Create</button>
+    </div>
+  );
+};
 
-    const handleStartUpload = () => {
-      if (!uploadPath) { showToast('Select a path to upload', 'error'); return; }
-      if (encryption === 'not_automatic' && !minimize) {
-        if (!password && !randomSeed) { showToast('Provide password or select Random', 'error'); return; }
-        if (randomSeed) {
-          const pass = generateRandomPassword();
-          setGeneratedPassword(pass);
-          setShowPasswordModal(true);
-          return;
-        }
-      }
-      proceedWithUpload(password);
-    };
-    const proceedWithUpload = (finalPassword) => {
+const UploadForm = () => {
+  const [localPaths, setLocalPaths] = useState([]);
+  const [showPicker, setShowPicker] = useState(false);
+  const [encryption, setEncryption] = useState('automatic');
+  const [password, setPassword] = useState('');
+  const [randomSeed, setRandomSeed] = useState(false);
+  const [zeroKnowledge, setZeroKnowledge] = useState(false);
+  const [uploadName, setUploadName] = useState('');
+  const [newVersionString, setNewVersionString] = useState('');
+  const [strictness, setStrictness] = useState('NA');
+  const [chunkSize, setChunkSize] = useState('');
+  const [minimize, setMinimize] = useState(false);
+  const [nameCheck, setNameCheck] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const genPass = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
+    return Array.from(crypto.getRandomValues(new Uint32Array(24))).map(x => chars[x % chars.length]).join('');
+  };
+
+  const startUpload = () => {
+    if (localPaths.length === 0) { showToast('Select at least one file/folder', 'error'); return; }
+    let finalPassword = password;
+    if (encryption === 'not_automatic' && !minimize) {
+      if (!password && !randomSeed) { showToast('Provide password or select Random', 'error'); return; }
+    }
+    if (encryption === 'not_automatic' && randomSeed && !showPassword) {
+      const p = genPass();
+      setPassword(p);
+      setShowPassword(true);
+      return;
+    }
+    localPaths.forEach(path => {
       const enc = minimize && encryption === 'not_automatic' ? 'automatic' : encryption;
-      const args = [
-        'upload', uploadPath, '-db', selectedDb,
-        '--encryption_mode', enc,
-        '--target_item_path', targetItemPath, '--upload_mode', 'new_version'
-      ];
+      const args = ['upload', path, '-db', selectedDb, '--encryption_mode', enc];
       if (config?.discord?.channel_id) args.push('-c', String(config.discord.channel_id));
       if (enc === 'not_automatic' && finalPassword) args.push('--password_seed', finalPassword);
       if (uploadName) args.push('--upload_name', uploadName);
       if (newVersionString) args.push('--new_version_string', newVersionString);
-      if (strictnessMode !== 'NA') args.push('--strictness_mode', strictnessMode);
-      if (chunkSizeMb) args.push('--chunk_size_mb', chunkSizeMb);
+      if (strictness !== 'NA') args.push('--strictness_mode', strictness);
+      if (chunkSize) args.push('--chunk_size_mb', chunkSize);
       if (minimize) args.push('--minimize', 'yes');
       if (!nameCheck) args.push('--no_name_check');
-      if (additionMode) { args.push('--addition'); if (sourceVersion) args.push('--source_version', sourceVersion); }
       args.push('--save_hash', encryption === 'not_automatic' && zeroKnowledge ? 'False' : 'True');
-      runCmd(args, uploadPath.split(/[/\\]/).pop(), 'upload');
-      setModal(null);
-    };
-
-    return (
-      <div className="space-y-4">
-        <div className="p-4 bg-[#3bb5ff]/5 border border-[#3bb5ff]/20 rounded-2xl">
-          <p className="text-[10px] text-[#3bb5ff] font-black uppercase tracking-widest mb-1">Target Item</p>
-          <p className="text-sm font-bold text-white truncate">{targetItemPath.split('/').pop()}</p>
-          <p className="text-[9px] text-gray-500 mt-1 uppercase font-bold">Currently has {versions.length} version(s)</p>
-        </div>
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">New File/Folder Source:</label>
-          <div className="flex gap-2">
-            <input type="text" value={localPath} onChange={e => setLocalPath(e.target.value)} placeholder="Path on device..." className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white focus:border-[#3bb5ff] outline-none" />
-            <button onClick={() => setModal({ title: 'Pick Source', content: <RemoteFolderPicker showFiles onSelect={p => { setLocalPath(p); setModal({ title: 'New Version', content: <NewVersionUploadModalContent targetItemPath={targetItemPath} onUpload={onUpload} /> }); }} onCancel={() => setModal({ title: 'New Version', content: <NewVersionUploadModalContent targetItemPath={targetItemPath} onUpload={onUpload} /> })} /> })} className="p-3 bg-[#0f1f3a] text-[#3bb5ff] rounded-xl border border-[#1a3a5c] btn-touch">{Ico.folderOpen}</button>
-          </div>
-        </div>
-        <button onClick={handleUpload} disabled={!localPath} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] btn-touch disabled:opacity-30">Upload New Version</button>
-      </div>
-    );
+      runCmd(args, path.split(/[/\\]/).pop(), 'upload');
+    });
+    setBottomSheet(null);
+    showToast(`${localPaths.length} upload(s) queued`, 'success');
   };
 
-  const ModifyModalContent = ({ type, items, item, onConfirm }) => {
-    const currentItems = items || (item ? [item] : []);
-    const [destination, setDestination] = useState('.');
-    const [newName, setNewName] = useState(currentItems.length === 1 ? currentItems[0].displayName : '');
-    const [copyMode, setCopyMode] = useState(false);
-    const [nameMode, setNameMode] = useState('D');
-
-    const handleConfirm = () => {
-      if (type === 'move') {
-        onConfirm({
-          type: 'move',
-          items: currentItems,
-          dst: destination,
-          copyMode,
-          nameCheck,
-          dstIdBased: false
-        });
-      } else {
-        onConfirm({
-          type: 'rename',
-          item: currentItems[0],
-          newName,
-          nameMode,
-          nameCheck,
-          idBased: !!currentItems[0].itemid
-        });
-      }
-    };
-
-    return (
-      <div className="space-y-4">
-        <div className="bg-[#060d1a] p-3 rounded-lg border border-[#1a3a5c]">
-          <p className="text-xs text-gray-500">{currentItems.length > 1 ? `Source Items (${currentItems.length})` : 'Source:'}</p>
-          <p className="text-sm text-white truncate">
-            {currentItems.length > 1 ? `${currentItems.length} items selected` : currentItems[0].displayName}
-          </p>
-        </div>
-
-        {type === 'rename' ? (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">New Name:</label>
-              <input autoFocus type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white focus:border-[#3bb5ff] outline-none" />
-            </div>
-            <div className="space-y-2">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Rename Mode:</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { id: 'D', label: 'Display Only' },
-                  { id: 'N', label: 'Internal Only' },
-                  { id: 'B', label: 'Both' },
-                  { id: 'A', label: 'Smart Auto' }
-                ].map(m => (
-                  <button key={m.id} onClick={() => setNameMode(m.id)} className={`py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${nameMode === m.id ? 'bg-[#3bb5ff]/20 border-[#3bb5ff] text-[#3bb5ff]' : 'bg-[#0f1f3a]/50 border-[#1a3a5c] text-gray-500'}`}>{m.label}</button>
-                ))}
-              </div>
-            </div>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={nameCheck} onChange={e => setNameCheck(e.target.checked)} className="accent-[#3bb5ff]" /><span className="text-sm">Name Check</span></label>
-          </>
-        )}
-        <div className="flex justify-end gap-3 pt-4 border-t border-[#1a3a5c]">
-          <button onClick={() => onConfirm(null)} className="px-4 py-2 text-sm text-gray-400">Cancel</button>
-          <button onClick={handleSubmit} className="px-6 py-2 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-lg font-bold">Confirm {type}</button>
-        </div>
+  if (showPicker) return <RemoteFolderPicker initialPath="" showFiles multiSelect onSelect={p => { setLocalPaths(p); if (p.length > 1) setUploadName(''); setShowPicker(false); }} onCancel={() => setShowPicker(false)} />;
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <div className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-gray-400 truncate">{localPaths.length ? localPaths.map(p => p.split(/[/\\]/).pop()).join(', ') : 'No files selected'}</div>
+        <button onClick={() => setShowPicker(true)} className="px-4 py-3 bg-[#0f1f3a] border border-[#1a3a5c] rounded-xl text-[#3bb5ff] btn-touch">Browse</button>
       </div>
-    );
-  };
-
-  const MakeFolderModalContent = () => {
-    const [folderName, setFolderName] = useState('');
-    const [parent, setParent] = useState(currentPath);
-    const [showPicker, setShowPicker] = useState(false);
-    if (showPicker) return <ArchiveFolderPicker selectedDb={selectedDb} onSelect={p => { setParent(p); setShowPicker(false); }} onCancel={() => setShowPicker(false)} initialPath={parent} />;
-    return (
-      <div className="space-y-4">
-        <div className="flex gap-2">
-          <input type="text" value={parent} onChange={e => setParent(e.target.value)} className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm" />
-          <button onClick={() => setShowPicker(true)} className="px-4 py-3 bg-[#0f1f3a] border border-[#1a3a5c] rounded-xl text-[#3bb5ff]">Browse</button>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] text-gray-500 uppercase">Encryption</label>
+          <select value={encryption} onChange={e => setEncryption(e.target.value)} disabled={minimize} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm">
+            <option value="automatic">Automatic</option>
+            <option value="off">Off</option>
+            <option value="not_automatic">Password</option>
+          </select>
         </div>
-        <input type="text" value={folderName} onChange={e => setFolderName(e.target.value)} placeholder="Folder name" maxLength={60} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm" />
-        <button onClick={async () => {
-          if (!folderName.trim()) return;
-          try {
-            await fetch('/api/folders/make', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: selectedDb, folder_name: folderName.trim(), parent_path: parent || '.', id_based: false }) });
-            showToast('Folder created', 'success');
-            setModal(null);
-            fetchFiles(currentPath);
-          } catch (e) { showToast(e.message, 'error'); }
-        }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold">Create</button>
-      </div>
-    );
-  };
-
-  const UploadForm = () => {
-    const [localPaths, setLocalPaths] = useState([]);
-    const [showPicker, setShowPicker] = useState(false);
-    const [encryption, setEncryption] = useState('automatic');
-    const [password, setPassword] = useState('');
-    const [randomSeed, setRandomSeed] = useState(false);
-    const [zeroKnowledge, setZeroKnowledge] = useState(false);
-    const [uploadName, setUploadName] = useState('');
-    const [newVersionString, setNewVersionString] = useState('');
-    const [strictness, setStrictness] = useState('NA');
-    const [chunkSize, setChunkSize] = useState('');
-    const [minimize, setMinimize] = useState(false);
-    const [nameCheck, setNameCheck] = useState(true);
-    const [showPassword, setShowPassword] = useState(false);
-
-    const genPass = () => {
-      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
-      return Array.from(crypto.getRandomValues(new Uint32Array(24))).map(x => chars[x % chars.length]).join('');
-    };
-
-    const startUpload = () => {
-      if (localPaths.length === 0) { showToast('Select at least one file/folder', 'error'); return; }
-      let finalPassword = password;
-      if (encryption === 'not_automatic' && !minimize) {
-        if (!password && !randomSeed) { showToast('Provide password or select Random', 'error'); return; }
-      }
-      if (encryption === 'not_automatic' && randomSeed && !showPassword) {
-        const p = genPass();
-        setPassword(p);
-        setShowPassword(true);
-        return;
-      }
-      localPaths.forEach(path => {
-        const enc = minimize && encryption === 'not_automatic' ? 'automatic' : encryption;
-        const args = ['upload', path, '-db', selectedDb, '--encryption_mode', enc];
-        if (config?.discord?.channel_id) args.push('-c', String(config.discord.channel_id));
-        if (enc === 'not_automatic' && finalPassword) args.push('--password_seed', finalPassword);
-        if (uploadName) args.push('--upload_name', uploadName);
-        if (newVersionString) args.push('--new_version_string', newVersionString);
-        if (strictness !== 'NA') args.push('--strictness_mode', strictness);
-        if (chunkSize) args.push('--chunk_size_mb', chunkSize);
-        if (minimize) args.push('--minimize', 'yes');
-        if (!nameCheck) args.push('--no_name_check');
-        args.push('--save_hash', encryption === 'not_automatic' && zeroKnowledge ? 'False' : 'True');
-        runCmd(args, path.split(/[/\\]/).pop(), 'upload');
-      });
-      setBottomSheet(null);
-      showToast(`${localPaths.length} upload(s) queued`, 'success');
-    };
-
-    if (showPicker) return <RemoteFolderPicker initialPath="" showFiles multiSelect onSelect={p => { setLocalPaths(p); if (p.length > 1) setUploadName(''); setShowPicker(false); }} onCancel={() => setShowPicker(false)} />;
-    return (
-      <div className="space-y-4">
-        <div className="flex gap-2">
-          <div className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-gray-400 truncate">{localPaths.length ? localPaths.map(p => p.split(/[/\\]/).pop()).join(', ') : 'No files selected'}</div>
-          <button onClick={() => setShowPicker(true)} className="px-4 py-3 bg-[#0f1f3a] border border-[#1a3a5c] rounded-xl text-[#3bb5ff] btn-touch">Browse</button>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-[10px] text-gray-500 uppercase">Encryption</label>
-            <select value={encryption} onChange={e => setEncryption(e.target.value)} disabled={minimize} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm">
-              <option value="automatic">Automatic</option>
-              <option value="off">Off</option>
-              <option value="not_automatic">Password</option>
-            </select>
-          </div>
         ) : (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Destination:</label>
-              <div className="flex gap-2">
-                <div className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white truncate opacity-80">{destination === '.' ? 'Root' : destination}</div>
-                <button onClick={() => setModal({ title: 'Pick Destination', content: <ArchiveFolderPicker db={selectedDb} onSelect={p => { setDestination(p); setModal({ title: 'Move / Copy', content: <ModifyModalContent type={type} item={item} onConfirm={onConfirm} /> }); }} onCancel={() => setModal({ title: 'Move / Copy', content: <ModifyModalContent type={type} item={item} onConfirm={onConfirm} /> })} /> })} className="p-3 bg-[#0f1f3a] text-[#3bb5ff] rounded-xl border border-[#1a3a5c] btn-touch">{Ico.folderOpen}</button>
-              </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Destination:</label>
+            <div className="flex gap-2">
+              <div className="flex-1 bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white truncate opacity-80">{destination === '.' ? 'Root' : destination}</div>
+              <button onClick={() => setModal({ title: 'Pick Destination', content: <ArchiveFolderPicker db={selectedDb} onSelect={p => { setDestination(p); setModal({ title: 'Move / Copy', content: <ModifyModalContent type={type} item={item} onConfirm={onConfirm} /> }); }} onCancel={() => setModal({ title: 'Move / Copy', content: <ModifyModalContent type={type} item={item} onConfirm={onConfirm} /> })} /> })} className="p-3 bg-[#0f1f3a] text-[#3bb5ff] rounded-xl border border-[#1a3a5c] btn-touch">{Ico.folderOpen}</button>
             </div>
-            <label className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${copyMode ? 'bg-[#3bb5ff]/10 border-[#3bb5ff]' : 'bg-[#0f1f3a]/30 border-[#1a3a5c]'}`}>
-              <input type="checkbox" checked={copyMode} onChange={e => setCopyMode(e.target.checked)} className="hidden" />
-              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${copyMode ? 'bg-[#3bb5ff] border-[#3bb5ff]' : 'border-gray-600'}`}>{copyMode && <div className="w-2 h-2 bg-[#0a1628] rounded-full" />}</div>
-              <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">Copy instead of Move</span>
-            </label>
           </div>
+          <label className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${copyMode ? 'bg-[#3bb5ff]/10 border-[#3bb5ff]' : 'bg-[#0f1f3a]/30 border-[#1a3a5c]'}`}>
+            <input type="checkbox" checked={copyMode} onChange={e => setCopyMode(e.target.checked)} className="hidden" />
+            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${copyMode ? 'bg-[#3bb5ff] border-[#3bb5ff]' : 'border-gray-600'}`}>{copyMode && <div className="w-2 h-2 bg-[#0a1628] rounded-full" />}</div>
+            <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">Copy instead of Move</span>
+          </label>
+        </div>
         )}
 
         <div className="flex gap-3">
@@ -1356,30 +1357,30 @@ export default function App() {
 
         <button onClick={startUpload} disabled={localPaths.length === 0 || !selectedDb} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold btn-touch disabled:opacity-40">Queue Upload</button>
       </div>
-    );
+      );
   };
 
-  const PasswordPromptModalContent = ({ items: pwdItems, onConfirm }) => {
-    const [passwords, setPasswords] = useState({});
+      const PasswordPromptModalContent = ({items: pwdItems, onConfirm }) => {
+    const [passwords, setPasswords] = useState({ });
 
     const groupedItems = pwdItems.reduce((acc, item) => {
       const key = item.hash || item.id;
       if (!acc[key]) acc[key] = [];
       acc[key].push(item);
       return acc;
-    }, {});
+    }, { });
 
     const handleChange = (groupId, val) => {
-      setPasswords(prev => {
-        const next = { ...prev };
-        groupedItems[groupId].forEach(item => {
-          next[item.id] = val;
+        setPasswords(prev => {
+          const next = { ...prev };
+          groupedItems[groupId].forEach(item => {
+            next[item.id] = val;
+          });
+          return next;
         });
-        return next;
-      });
     };
 
-    return (
+      return (
       <div className="space-y-4">
         {Object.entries(groupedItems).map(([groupId, itemsInGroup]) => (
           <div key={groupId} className="bg-[#0a1628] rounded-xl p-3 border border-[#1a3a5c]">
@@ -1393,47 +1394,47 @@ export default function App() {
         ))}
         <button onClick={() => onConfirm(passwords)} className="w-full py-3 bg-[#3bb5ff] text-[#060d1a] rounded-xl font-bold">Download</button>
       </div>
-    );
+      );
   };
 
   const OpenVolumeModalContent = () => {
     const [viewMode, setViewMode] = useState('browse');
-    const [currentPath, setCurrentPath] = useState('');
-    const [items, setItems] = useState([]);
-    const [selectedPaths, setSelectedPaths] = useState([]);
-    const [loading, setLoading] = useState(false);
+      const [currentPath, setCurrentPath] = useState('');
+      const [items, setItems] = useState([]);
+      const [selectedPaths, setSelectedPaths] = useState([]);
+      const [loading, setLoading] = useState(false);
 
     const load = async () => {
-      setLoading(true);
+        setLoading(true);
       try {
         if (viewMode === 'databases') {
           const r = await fetch('/api/dbs');
-          const data = await r.json();
-          setItems((data.dbs || []).map(db => ({ name: db, path: db, is_dir: false, is_db: true })));
-          setCurrentPath('DATABASES folder');
+      const data = await r.json();
+          setItems((data.dbs || []).map(db => ({name: db, path: db, is_dir: false, is_db: true })));
+      setCurrentPath('DATABASES folder');
         } else {
           const r = await fetch(`/api/fs/browse?path=${encodeURIComponent(currentPath)}`);
-          const data = await r.json();
-          setCurrentPath(data.current_path);
-          setItems(data.items.map(i => ({ ...i, is_db: i.name.toLowerCase().endsWith('.db'), is_vov: i.name.toLowerCase().endsWith('.vov') })));
+      const data = await r.json();
+      setCurrentPath(data.current_path);
+          setItems(data.items.map(i => ({...i, is_db: i.name.toLowerCase().endsWith('.db'), is_vov: i.name.toLowerCase().endsWith('.vov') })));
         }
-      } catch (e) { showToast('Failed to load', 'error'); }
+      } catch (e) {showToast('Failed to load', 'error'); }
       setLoading(false);
     };
-    useEffect(() => { load(); }, [viewMode, currentPath]);
+    useEffect(() => {load(); }, [viewMode, currentPath]);
 
     const handleImport = async (path) => {
       try {
         await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vov_path: path }) });
-        showToast('Imported successfully', 'success');
-        setModal(null);
-        fetchDbs();
-      } catch (e) { showToast(e.message, 'error'); }
+      showToast('Imported successfully', 'success');
+      setModal(null);
+      fetchDbs();
+      } catch (e) {showToast(e.message, 'error'); }
     };
 
     const toggleSelect = (path) => setSelectedPaths(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]);
 
-    return (
+      return (
       <div className="space-y-4">
         <div className="flex gap-2 p-1 bg-[#060d1a] rounded-xl border border-[#1a3a5c]">
           {['browse', 'databases'].map(m => (
@@ -1457,39 +1458,39 @@ export default function App() {
         <button onClick={() => setModal(null)} className="w-full py-3 bg-[#0f1f3a] text-white rounded-xl">Cancel</button>
         <button onClick={() => { selectedPaths.forEach(p => { setExternalVolumes(prev => { const u = [...new Set([...prev, p])]; localStorage.setItem('mob_externalVolumes', JSON.stringify(u)); return u; }); }); fetchDbs(); setModal(null); }} className="w-full py-3 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl font-bold">Open {selectedPaths.length} Volume(s)</button>
       </div>
-    );
+      );
   };
 
   const SharablesModalContent = () => {
     const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [currentPath, setCurrentPath] = useState('');
-    const [viewMode, setViewMode] = useState('sharables');
+      const [loading, setLoading] = useState(false);
+      const [currentPath, setCurrentPath] = useState('');
+      const [viewMode, setViewMode] = useState('sharables');
 
     const fetchSharables = async () => {
-      setLoading(true);
+        setLoading(true);
       try {
         const r = await fetch('/api/dbs/list_sharables');
-        const data = await r.json();
-        setItems(data.items || []);
-        setCurrentPath(data.path || 'src/SHARABLES');
-      } catch (e) { showToast('Failed to load sharables', 'error'); }
+      const data = await r.json();
+      setItems(data.items || []);
+      setCurrentPath(data.path || 'src/SHARABLES');
+      } catch (e) {showToast('Failed to load sharables', 'error'); }
       setLoading(false);
     };
 
     const fetchDirectory = async (path = '') => {
-      setLoading(true);
+        setLoading(true);
       try {
         const r = await fetch(`/api/fs/browse?path=${encodeURIComponent(path)}`);
-        const data = await r.json();
-        setCurrentPath(data.current_path);
-        setItems(data.items.map(item => ({ ...item, is_vov: item.name.toLowerCase().endsWith('.vov') })));
-      } catch (e) { showToast('Failed to browse directory', 'error'); }
+      const data = await r.json();
+      setCurrentPath(data.current_path);
+        setItems(data.items.map(item => ({...item, is_vov: item.name.toLowerCase().endsWith('.vov') })));
+      } catch (e) {showToast('Failed to browse directory', 'error'); }
       setLoading(false);
     };
 
     const goHome = async () => {
-      try { const r = await fetch('/api/fs/home'); const d = await r.json(); fetchDirectory(d.path); } catch (e) { fetchDirectory(''); }
+      try { const r = await fetch('/api/fs/home'); const d = await r.json(); fetchDirectory(d.path); } catch (e) {fetchDirectory(''); }
     };
 
     useEffect(() => {
@@ -1510,12 +1511,12 @@ export default function App() {
       else if (item.is_vov) handleImport(item.path, item.is_encrypted);
     };
 
-    const tabs = [
-      { id: 'browse', label: 'System Browser', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg> },
-      { id: 'sharables', label: 'src/SHARABLES', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" /></svg> },
-    ];
+      const tabs = [
+      {id: 'browse', label: 'System Browser', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg> },
+      {id: 'sharables', label: 'src/SHARABLES', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 flex-shrink-0"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" /></svg> },
+      ];
 
-    return (
+      return (
       <div className="-mx-4 -mt-4">
         <div className="flex gap-1 p-2 bg-[#060d1a] border-b border-[#1a3a5c]">
           {tabs.map(t => (
@@ -1577,32 +1578,32 @@ export default function App() {
           <p className="text-[10px] text-gray-600 italic text-center">Tap a .vov package to import it into your workspace.</p>
         </div>
       </div>
-    );
+      );
   };
 
-  const RenameVolumeModalContent = ({ db }) => {
+      const RenameVolumeModalContent = ({db}) => {
     const [newName, setNewName] = useState(db.replace(/\.db$/i, ''));
-    const [error, setError] = useState('');
-    const [saving, setSaving] = useState(false);
+      const [error, setError] = useState('');
+      const [saving, setSaving] = useState(false);
     const handleRename = async () => {
       const trimmed = newName.trim();
-      if (!trimmed) { setError('Name cannot be empty'); return; }
+      if (!trimmed) {setError('Name cannot be empty'); return; }
       const finalName = trimmed.endsWith('.db') ? trimmed : `${trimmed}.db`;
-      if (finalName === db) { setModal(null); return; }
+      if (finalName === db) {setModal(null); return; }
       setSaving(true); setError('');
       try {
-        const res = await fetch('/api/dbs/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ old_name: db, new_name: finalName }) });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Rename failed'); }
+        const res = await fetch('/api/dbs/rename', {method: 'POST', headers: {'Content-Type': 'application/json' }, body: JSON.stringify({old_name: db, new_name: finalName }) });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Rename failed'); }
         setDbs(prev => prev.map(d => d === db ? finalName : d));
-        if (selectedDb === db) setSelectedDb(finalName);
+      if (selectedDb === db) setSelectedDb(finalName);
         updateRecentVolumes(prev => prev.map(d => d === db ? finalName : d));
         setExternalVolumes(prev => { const u = prev.map(d => d === db ? finalName : d); localStorage.setItem('mob_externalVolumes', JSON.stringify(u)); return u; });
-        showToast('Volume renamed', 'success');
-        setModal(null);
-      } catch (e) { setError(e.message); }
-      finally { setSaving(false); }
+      showToast('Volume renamed', 'success');
+      setModal(null);
+      } catch (e) {setError(e.message); }
+      finally {setSaving(false); }
     };
-    return (
+      return (
       <div className="space-y-4">
         <div>
           <label className="text-[10px] text-gray-500 uppercase mb-1 block">New Volume Name</label>
@@ -1618,20 +1619,20 @@ export default function App() {
           </button>
         </div>
       </div>
-    );
+      );
   };
 
-  const NukeModalContent = ({ db }) => {
+      const NukeModalContent = ({db}) => {
     const [confirm, setConfirm] = useState('');
     const execute = async () => {
       try {
         await fetch('/api/dbs/nuke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: db }) });
-        showToast(`Volume ${db} has been wiped`, 'success');
-        setModal(null);
-        if (selectedDb === db) fetchFiles('.');
-      } catch (e) { showToast(e.message, 'error'); }
+      showToast(`Volume ${db} has been wiped`, 'success');
+      setModal(null);
+      if (selectedDb === db) fetchFiles('.');
+      } catch (e) {showToast(e.message, 'error'); }
     };
-    return (
+      return (
       <div className="space-y-4">
         <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-xl">
           <p className="text-sm text-red-400 font-bold">☢️ NUKE VOLUME ☢️</p>
@@ -1640,13 +1641,13 @@ export default function App() {
         <input type="text" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder='Type "NUKE" to confirm' className="w-full bg-[#060d1a] border border-red-900/50 rounded-xl px-4 py-3 text-sm" />
         <button onClick={execute} disabled={confirm !== 'NUKE'} className="w-full py-4 bg-red-600 disabled:opacity-30 text-white rounded-xl font-bold">EXECUTE NUKE</button>
       </div>
-    );
+      );
   };
 
-  const ItemOptionsMenu = ({ items }) => {
+      const ItemOptionsMenu = ({items}) => {
     const isSingle = items.length === 1;
-    const item = isSingle ? items[0] : null;
-    return (
+      const item = isSingle ? items[0] : null;
+      return (
       <div className="space-y-2">
         {isSingle && (
           <>
@@ -1664,35 +1665,35 @@ export default function App() {
           </>
         )}
       </div>
-    );
+      );
   };
 
   // -------------------- RENDER --------------------
   const CreateVolumeModalContent = () => {
     const [name, setName] = useState('');
-    const [error, setError] = useState('');
-    const [creating, setCreating] = useState(false);
+      const [error, setError] = useState('');
+      const [creating, setCreating] = useState(false);
     const handleCreate = async () => {
       const trimmed = name.trim();
-      if (!trimmed) { setError('Volume name cannot be empty'); return; }
+      if (!trimmed) {setError('Volume name cannot be empty'); return; }
       const finalName = trimmed.endsWith('.db') ? trimmed : `${trimmed}.db`;
       setCreating(true); setError('');
       try {
         const res = await fetch('/api/dbs/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ db_name: finalName })
+        method: 'POST',
+      headers: {'Content-Type': 'application/json' },
+      body: JSON.stringify({db_name: finalName })
         });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Failed to create volume'); }
-        showToast(`Volume ${finalName} created`, 'success');
-        setShowCreateVolume(false);
-        setName('');
-        fetchDbs();
-      } catch (e) { setError(e.message); }
-      finally { setCreating(false); }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Failed to create volume'); }
+      showToast(`Volume ${finalName} created`, 'success');
+      setShowCreateVolume(false);
+      setName('');
+      fetchDbs();
+      } catch (e) {setError(e.message); }
+      finally {setCreating(false); }
     };
 
-    return (
+      return (
       <div className="space-y-4">
         <div>
           <label className="text-[10px] text-gray-500 uppercase mb-1 block">Volume Name</label>
@@ -1712,443 +1713,443 @@ export default function App() {
           <button onClick={handleCreate} disabled={creating || !name.trim()} className="flex-1 py-3 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl font-bold btn-touch text-sm disabled:opacity-40">{creating ? 'Creating...' : 'Create Volume'}</button>
         </div>
       </div>
-    );
+      );
   };
 
-  const RenameVolumeModalContent = ({ db }) => {
+      const RenameVolumeModalContent = ({db}) => {
     const [name, setName] = useState(db.replace('.db', ''));
     const handleRename = async () => {
       const finalName = name.trim().endsWith('.db') ? name.trim() : `${name.trim()}.db`;
       try {
-        const res = await fetch('/api/dbs/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ old_name: db, new_name: finalName }) });
-        if (!res.ok) throw new Error('Rename failed');
-        fetchDbs(); if (selectedDb === db) setSelectedDb(finalName);
-        showToast('Volume renamed', 'success'); setModal(null);
-      } catch (e) { showToast(e.message, 'error'); }
+        const res = await fetch('/api/dbs/rename', {method: 'POST', headers: {'Content-Type': 'application/json' }, body: JSON.stringify({old_name: db, new_name: finalName }) });
+      if (!res.ok) throw new Error('Rename failed');
+      fetchDbs(); if (selectedDb === db) setSelectedDb(finalName);
+      showToast('Volume renamed', 'success'); setModal(null);
+      } catch (e) {showToast(e.message, 'error'); }
     };
-    return (
+      return (
       <div className="space-y-4">
         <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm text-white" />
         <div className="flex gap-3"><button onClick={() => setModal(null)} className="flex-1 py-3 bg-[#0f1f3a] text-gray-400 rounded-xl">Cancel</button><button onClick={handleRename} className="flex-1 py-3 bg-[#3bb5ff] text-[#060d1a] rounded-xl font-bold">Rename</button></div>
       </div>
-    );
+      );
   };
 
-  const NukeModalContent = ({ db }) => {
+      const NukeModalContent = ({db}) => {
     const [confirm, setConfirm] = useState('');
     const handleNuke = async () => {
       if (confirm !== 'NUKE') return;
       try {
         await fetch('/api/dbs/nuke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: db }) });
-        showToast('Volume nuked', 'success'); setModal(null); fetchFiles(currentPath);
-      } catch (e) { showToast('Nuke failed', 'error'); }
+      showToast('Volume nuked', 'success'); setModal(null); fetchFiles(currentPath);
+      } catch (e) {showToast('Nuke failed', 'error'); }
     };
-    return (
+      return (
       <div className="space-y-4">
         <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-xl"><p className="text-sm text-red-400 font-bold uppercase mb-1">Warning: Nuclear Option</p><p className="text-xs text-gray-300">This will wipe all file metadata in <span className="text-white font-mono">{db}</span>. Discord files will remain but the volume will be empty.</p></div>
         <p className="text-[10px] text-gray-500 uppercase font-bold text-center">Type "NUKE" to confirm:</p>
         <input autoFocus type="text" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="NUKE" className="w-full bg-[#060d1a] border border-red-900/50 rounded-xl px-3 py-3 text-sm text-center text-red-500 font-black tracking-widest" />
         <div className="flex gap-3"><button onClick={() => setModal(null)} className="flex-1 py-3 bg-[#0f1f3a] text-gray-400 rounded-xl">Cancel</button><button onClick={handleNuke} disabled={confirm !== 'NUKE'} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold disabled:opacity-30">Execute Nuke</button></div>
       </div>
-    );
+      );
   };
 
-  const ItemOptionsMenu = ({ item }) => (
-    <div className="space-y-2">
-      <button onClick={() => { setBottomSheet(null); setModal({ title: 'New Version', content: <NewVersionUploadModalContent targetItemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} onUpload={() => { }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.plus} Upload New Version</button>
-      <button onClick={() => { setBottomSheet(null); setModal({ title: 'Versions', content: <SeeVersionsModalContent itemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} onClose={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.clock} See Versions</button>
-      <button onClick={() => { setBottomSheet(null); setModal({ title: 'Download Version', content: <DownloadVersionModalContent itemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} item={item} onDownload={(args) => { if (args) { const isEncrypted = item && (item.encryption === 'not_automatic' || item.encryption_mode === 'not_automatic'); if (isEncrypted) { setModal({ title: 'Passwords Required', content: <PasswordPromptModalContent items={[{ id: item.itemid, name: item.displayName, hash: item.password_seed_hash || '' }]} onConfirm={(passwords) => { setModal(null); const finalArgs = [...args]; if (Object.keys(passwords).length) { finalArgs.push('--passwords', JSON.stringify(passwords)); } runCmd(finalArgs, item.displayName, 'download'); showToast('Download queued', 'success'); }} /> }); } else { runCmd(args, item.displayName, 'download'); setModal(null); showToast('Download queued', 'success'); } } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.download} Download Version</button>
-      <button onClick={() => { setBottomSheet(null); setModal({ title: 'Move / Copy', content: <ModifyModalContent type="move" item={item} onConfirm={(data) => { if (data) { const args = ['modify', data.type]; if (data.type === 'move') { args.push(data.src, data.dst); if (data.copyMode) args.push('--copy'); if (data.srcIdBased) args.push('--src_id_based'); if (data.dstIdBased) args.push('--dst_id_based'); } else { args.push(data.item, data.newName); if (data.nameMode !== 'D') args.push('--mode', data.nameMode); } args.push('-db', selectedDb); if (data.type !== 'move' && data.idBased) args.push('--id_based'); if (!data.nameCheck) args.push('--no_name_check'); runCmd(args, item.displayName, data.type); setModal(null); showToast(`${data.type} queued`, 'success'); } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.move} Move / Copy</button>
-      <button onClick={() => { setBottomSheet(null); setModal({ title: 'Rename', content: <ModifyModalContent type="rename" item={item} onConfirm={(data) => { if (data) { const args = ['modify', data.type]; args.push(data.item, data.newName); if (data.nameMode !== 'D') args.push('--mode', data.nameMode); args.push('-db', selectedDb); if (data.idBased) args.push('--id_based'); if (!data.nameCheck) args.push('--no_name_check'); runCmd(args, item.displayName, 'rename'); setModal(null); showToast('Rename queued', 'success'); } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.rename} Rename</button>
-      <button onClick={() => { setBottomSheet(null); setModal({ title: 'Delete Item', content: <DeleteModalContent singleItem={item} onConfirm={(opts) => { const a = ['delete']; if (item.itemid) a.push(item.itemid, '--id_based'); else a.push(currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`); a.push('-db', selectedDb, '--skip_confirmation', 'yes'); if (opts.type === 'hard') a.push('--hard'); if (opts.scope === 'all') a.push('--all_versions', 'yes'); else if (opts.scope === 'specific' && opts.version) a.push('--version', opts.version); else if (opts.scope === 'range' && opts.startVersion && opts.endVersion) a.push('--st_version', opts.startVersion, '--en_version', opts.endVersion); runCmd(a, item.displayName, 'delete'); setModal(null); clearSelection(); showToast('Delete queued', 'success'); }} onCancel={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/20 border border-red-900/30 rounded-xl text-sm text-red-400 btn-touch">{Ico.trash} Delete</button>
-      <button onClick={() => { setBottomSheet(null); setModal({ title: 'Full Name Metadata', content: <FullNameModalContent item={item} onClose={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.info} Show Full Name</button>
-    </div>
-  );
-
-  const VolumeOptionsMenu = ({ db }) => (
-    <div className="space-y-2">
-      <button onClick={() => { setModal(null); setSelectedDb(db); setTab('explorer'); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.folderOpen} Open</button>
-      <button onClick={() => { setModal({ title: 'Rename Volume', content: <RenameVolumeModalContent db={db} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.rename} Rename</button>
-      <button onClick={() => { setModal(null); setDbToShare(db); setShowSharePasswordModal(true); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.share} Package</button>
-      <button onClick={() => { setModal(null); setModal({ title: '☢️ NUKE', content: <NukeModalContent db={db} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/10 border border-red-900/20 rounded-xl text-sm text-red-500 font-bold btn-touch">☢️ NUKE</button>
-      <button onClick={() => { setModal({ title: 'Confirm Deletion', content: <DeleteConfirmModal db={db} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/20 border border-red-900/30 rounded-xl text-sm text-red-400 btn-touch">{Ico.trash} Delete Permanently</button>
-    </div>
-  );
-
-  const DeleteConfirmModal = ({ db }) => (
-    <div className="space-y-4">
-      <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-xl">
-        <p className="text-sm text-red-400 font-bold">⚠️ PERMANENT DELETE</p>
-        <p className="text-xs text-gray-300 mt-1">This will permanently remove <span className="text-white font-mono">{db}</span> from disk. This CANNOT be undone.</p>
+      const ItemOptionsMenu = ({item}) => (
+      <div className="space-y-2">
+        <button onClick={() => { setBottomSheet(null); setModal({ title: 'New Version', content: <NewVersionUploadModalContent targetItemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} onUpload={() => { }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.plus} Upload New Version</button>
+        <button onClick={() => { setBottomSheet(null); setModal({ title: 'Versions', content: <SeeVersionsModalContent itemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} onClose={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.clock} See Versions</button>
+        <button onClick={() => { setBottomSheet(null); setModal({ title: 'Download Version', content: <DownloadVersionModalContent itemPath={currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`} item={item} onDownload={(args) => { if (args) { const isEncrypted = item && (item.encryption === 'not_automatic' || item.encryption_mode === 'not_automatic'); if (isEncrypted) { setModal({ title: 'Passwords Required', content: <PasswordPromptModalContent items={[{ id: item.itemid, name: item.displayName, hash: item.password_seed_hash || '' }]} onConfirm={(passwords) => { setModal(null); const finalArgs = [...args]; if (Object.keys(passwords).length) { finalArgs.push('--passwords', JSON.stringify(passwords)); } runCmd(finalArgs, item.displayName, 'download'); showToast('Download queued', 'success'); }} /> }); } else { runCmd(args, item.displayName, 'download'); setModal(null); showToast('Download queued', 'success'); } } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.download} Download Version</button>
+        <button onClick={() => { setBottomSheet(null); setModal({ title: 'Move / Copy', content: <ModifyModalContent type="move" item={item} onConfirm={(data) => { if (data) { const args = ['modify', data.type]; if (data.type === 'move') { args.push(data.src, data.dst); if (data.copyMode) args.push('--copy'); if (data.srcIdBased) args.push('--src_id_based'); if (data.dstIdBased) args.push('--dst_id_based'); } else { args.push(data.item, data.newName); if (data.nameMode !== 'D') args.push('--mode', data.nameMode); } args.push('-db', selectedDb); if (data.type !== 'move' && data.idBased) args.push('--id_based'); if (!data.nameCheck) args.push('--no_name_check'); runCmd(args, item.displayName, data.type); setModal(null); showToast(`${data.type} queued`, 'success'); } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.move} Move / Copy</button>
+        <button onClick={() => { setBottomSheet(null); setModal({ title: 'Rename', content: <ModifyModalContent type="rename" item={item} onConfirm={(data) => { if (data) { const args = ['modify', data.type]; args.push(data.item, data.newName); if (data.nameMode !== 'D') args.push('--mode', data.nameMode); args.push('-db', selectedDb); if (data.idBased) args.push('--id_based'); if (!data.nameCheck) args.push('--no_name_check'); runCmd(args, item.displayName, 'rename'); setModal(null); showToast('Rename queued', 'success'); } else setModal(null); }} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.rename} Rename</button>
+        <button onClick={() => { setBottomSheet(null); setModal({ title: 'Delete Item', content: <DeleteModalContent singleItem={item} onConfirm={(opts) => { const a = ['delete']; if (item.itemid) a.push(item.itemid, '--id_based'); else a.push(currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`); a.push('-db', selectedDb, '--skip_confirmation', 'yes'); if (opts.type === 'hard') a.push('--hard'); if (opts.scope === 'all') a.push('--all_versions', 'yes'); else if (opts.scope === 'specific' && opts.version) a.push('--version', opts.version); else if (opts.scope === 'range' && opts.startVersion && opts.endVersion) a.push('--st_version', opts.startVersion, '--en_version', opts.endVersion); runCmd(a, item.displayName, 'delete'); setModal(null); clearSelection(); showToast('Delete queued', 'success'); }} onCancel={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/20 border border-red-900/30 rounded-xl text-sm text-red-400 btn-touch">{Ico.trash} Delete</button>
+        <button onClick={() => { setBottomSheet(null); setModal({ title: 'Full Name Metadata', content: <FullNameModalContent item={item} onClose={() => setModal(null)} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.info} Show Full Name</button>
       </div>
-      <div className="flex gap-3">
-        <button onClick={() => setModal(null)} className="flex-1 py-3 bg-[#0f1f3a] text-gray-300 rounded-xl border border-[#1a3a5c] btn-touch">Cancel</button>
-        <button onClick={async () => { try { await fetch('/api/dbs/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: db }) }); fetchDbs(); if (selectedDb === db) setSelectedDb(''); showToast('Deleted', 'success'); setModal(null); } catch (e) { showToast(e.message, 'error'); } }} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold btn-touch">Delete</button>
-      </div>
-    </div>
-  );
+      );
 
-  return (
-    <div className="flex flex-col h-screen bg-[#060d1a] text-white overflow-hidden safe-top">
-      {/* Search Header (only in explorer) */}
-      {tab === 'explorer' && selectedDb && (
-        <div className="px-4 pt-4 pb-2">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[#3bb5ff] transition-colors">{Ico.search}</div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search files..."
-              className="w-full bg-[#0a1628] border border-[#1a3a5c] rounded-2xl py-4 pl-12 pr-4 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3bb5ff] transition-all shadow-lg"
-            />
-          </div>
+      const VolumeOptionsMenu = ({db}) => (
+      <div className="space-y-2">
+        <button onClick={() => { setModal(null); setSelectedDb(db); setTab('explorer'); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.folderOpen} Open</button>
+        <button onClick={() => { setModal({ title: 'Rename Volume', content: <RenameVolumeModalContent db={db} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.rename} Rename</button>
+        <button onClick={() => { setModal(null); setDbToShare(db); setShowSharePasswordModal(true); }} className="w-full flex items-center gap-3 px-4 py-3 bg-[#0f1f3a] rounded-xl text-sm text-gray-300 btn-touch">{Ico.share} Package</button>
+        <button onClick={() => { setModal(null); setModal({ title: '☢️ NUKE', content: <NukeModalContent db={db} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/10 border border-red-900/20 rounded-xl text-sm text-red-500 font-bold btn-touch">☢️ NUKE</button>
+        <button onClick={() => { setModal({ title: 'Confirm Deletion', content: <DeleteConfirmModal db={db} /> }); }} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/20 border border-red-900/30 rounded-xl text-sm text-red-400 btn-touch">{Ico.trash} Delete Permanently</button>
+      </div>
+      );
+
+      const DeleteConfirmModal = ({db}) => (
+      <div className="space-y-4">
+        <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-xl">
+          <p className="text-sm text-red-400 font-bold">⚠️ PERMANENT DELETE</p>
+          <p className="text-xs text-gray-300 mt-1">This will permanently remove <span className="text-white font-mono">{db}</span> from disk. This CANNOT be undone.</p>
         </div>
-      )}
+        <div className="flex gap-3">
+          <button onClick={() => setModal(null)} className="flex-1 py-3 bg-[#0f1f3a] text-gray-300 rounded-xl border border-[#1a3a5c] btn-touch">Cancel</button>
+          <button onClick={async () => { try { await fetch('/api/dbs/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: db }) }); fetchDbs(); if (selectedDb === db) setSelectedDb(''); showToast('Deleted', 'success'); setModal(null); } catch (e) { showToast(e.message, 'error'); } }} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold btn-touch">Delete</button>
+        </div>
+      </div>
+      );
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar relative px-4 pb-32">
-        {tab === 'explorer' && (
-          <div className="space-y-4 pt-4">
-            {!selectedDb ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center space-y-6">
-                <div className="w-24 h-24 rounded-full bg-[#0f1f3a] border-2 border-[#1a3a5c] flex items-center justify-center text-[#3bb5ff]/20">{Ico.cube}</div>
-                <div className="space-y-2">
-                  <h2 className="text-xl font-black text-white uppercase tracking-tighter">No Volume Selected</h2>
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-widest leading-loose">Pick a vault from the volumes tab<br />to browse your encrypted files.</p>
-                </div>
-                <button onClick={() => setTab('volumes')} className="px-8 py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-[#3bb5ff]/20 active:scale-95 transition-transform">Go to Volumes</button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <button onClick={goBack} className="p-2 -ml-2 text-[#3bb5ff] active:bg-[#3bb5ff]/10 rounded-full transition-colors">{Ico.chevronLeft}</button>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[9px] font-black text-[#3bb5ff] uppercase tracking-widest opacity-60 truncate">{selectedDb}</span>
-                      <h2 className="text-lg font-black text-white truncate tracking-tight uppercase leading-none">{currentPath === '.' ? 'Root' : currentPath.split('/').pop()}</h2>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => fetchFiles(currentPath)} className="p-3 bg-[#0f1f3a] text-gray-400 rounded-xl border border-[#1a3a5c] active:text-[#3bb5ff] transition-colors">{Ico.version}</button>
-                    <button onClick={() => setBottomSheet({ title: 'New Folder', content: <div className="space-y-4"><input autoFocus placeholder="Folder name..." id="new-folder-name" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm" /><button onClick={async () => { const n = document.getElementById('new-folder-name').value; if (n) { await fetch('/api/folders/make', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: selectedDb, folder_name: n, parent_path: currentPath, id_based: false }) }); fetchFiles(currentPath); setBottomSheet(null); } }} className="w-full py-4 bg-[#3bb5ff] text-[#0a1628] rounded-xl font-black uppercase tracking-widest text-[10px]">Create Folder</button></div> })} className="p-3 bg-[#0f1f3a] text-gray-400 rounded-xl border border-[#1a3a5c] active:text-[#3bb5ff] transition-colors">{Ico.folderOpen}</button>
-                  </div>
-                </div>
-
-                <div className="grid gap-3">
-                  {loadingFiles ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                      <div className="animate-spin text-[#3bb5ff] mb-4">{Ico.version}</div>
-                      <p className="text-[10px] font-black text-[#3bb5ff] uppercase tracking-[0.3em]">Browsing Vault...</p>
-                    </div>
-                  ) : isRetrying ? (
-                    <div className="flex flex-col items-center justify-center h-full py-20">
-                      <div className="mb-6 animate-spin text-[#3bb5ff]">{Ico.version}</div>
-                      <p className="text-sm font-bold uppercase tracking-widest text-[#3bb5ff]">Connecting to Volume...</p>
-                      <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Attempt {retryCountRef.current} of {maxRetries}</p>
-                    </div>
-                  ) : (
-                    filteredFiles.map(item => (
-                      <div key={item.itemid || item.displayName}
-                        className={`group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] ${selectedItems.find(i => (i.itemid && i.itemid === item.itemid) || (i.displayName === item.displayName)) ? 'bg-[#3bb5ff]/10 border-[#3bb5ff] shadow-[0_0_20px_rgba(59,181,255,0.1)]' : 'bg-[#0a1628]/80 border-[#1a3a5c] shadow-lg'}`}
-                      >
-                        <div onClick={() => toggleSelection(item)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedItems.find(i => (i.itemid && i.itemid === item.itemid) || (i.displayName === item.displayName)) ? 'bg-[#3bb5ff] border-[#3bb5ff]' : 'border-[#1a3a5c] bg-[#060d1a]'}`}>
-                          {selectedItems.find(i => (i.itemid && i.itemid === item.itemid) || (i.displayName === item.displayName)) && <div className="w-2.5 h-2.5 bg-[#0a1628] rounded-sm" />}
-                        </div>
-                        <div onClick={() => item.type === 'folder' ? navigateTo(item.displayName) : null} className="flex-1 min-w-0 flex items-center gap-3">
-                          <span className={`${item.type === 'folder' ? 'text-[#3bb5ff]' : 'text-gray-500'}`}>{item.type === 'folder' ? Ico.folder : Ico.file}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-white truncate uppercase tracking-tight leading-tight">{item.displayName}</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[8px] font-black text-[#3bb5ff] uppercase tracking-widest px-1.5 py-0.5 bg-[#3bb5ff]/10 rounded-md">v{item.version}</span>
-                              {item.encryption_mode === 'not_automatic' && <span className="text-gray-600">{Ico.shield}</span>}
-                            </div>
-                          </div>
-                        </div>
-                        <button onClick={() => setBottomSheet({ title: item.displayName, content: <ItemOptionsMenu item={item} /> })} className="p-3 -mr-2 text-gray-600 hover:text-white transition-colors">{Ico.menu}</button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </>
-            )}
+      return (
+      <div className="flex flex-col h-screen bg-[#060d1a] text-white overflow-hidden safe-top">
+        {/* Search Header (only in explorer) */}
+        {tab === 'explorer' && selectedDb && (
+          <div className="px-4 pt-4 pb-2">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[#3bb5ff] transition-colors">{Ico.search}</div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search files..."
+                className="w-full bg-[#0a1628] border border-[#1a3a5c] rounded-2xl py-4 pl-12 pr-4 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#3bb5ff] transition-all shadow-lg"
+              />
+            </div>
           </div>
         )}
 
-        {tab === 'volumes' && (
-          <div className="space-y-8 pt-6">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex flex-col">
-                <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">Vaults</h2>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Your encrypted containers</p>
-              </div>
-              <button onClick={() => setShowCreateVolume(true)} className="p-4 bg-[#3bb5ff] text-[#0a1628] rounded-2xl shadow-lg shadow-[#3bb5ff]/30 active:scale-90 transition-all">{Ico.plus}</button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2"><span className="text-[#3bb5ff]/50">{Ico.cube}</span><h3 className="text-[10px] uppercase font-bold text-[#3bb5ff]/50 tracking-widest">Active</h3></div>
-                <button onClick={() => setModal({ title: 'Add External Volume', content: <RemoteFolderPicker showFiles onSelect={p => { if (p.endsWith('.db')) { setExternalVolumes(prev => { const u = [...new Set([...prev, p])]; localStorage.setItem('mob_externalVolumes', JSON.stringify(u)); return u; }); fetchDbs(); setModal(null); showToast('Volume added', 'success'); } else showToast('Must be .db', 'error'); }} onCancel={() => setModal(null)} /> })} className="text-[10px] text-[#3bb5ff] font-bold btn-touch uppercase">+ External</button>
-              </div>
-              <div className="grid gap-3">
-                {allVolumes.map(db => (
-                  <div key={db} className={`group flex items-center justify-between p-5 rounded-3xl border transition-all ${selectedDb === db ? 'bg-gradient-to-br from-[#0a1628] to-[#0f1f3a] border-[#3bb5ff] shadow-xl' : 'bg-[#0a1628]/60 border-[#1a3a5c]'}`}>
-                    <div onClick={() => { if (selectedDb === db) fetchFiles(currentPath); else setSelectedDb(db); setTab('explorer'); }} className="flex-1 flex items-center gap-4 min-w-0 mr-2 py-1">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${selectedDb === db ? 'bg-[#3bb5ff] text-[#0a1628]' : 'bg-[#0f1f3a] text-gray-600'}`}>{Ico.cube}</div>
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar relative px-4 pb-32">
+          {tab === 'explorer' && (
+            <div className="space-y-4 pt-4">
+              {!selectedDb ? (
+                <div className="flex flex-col items-center justify-center py-24 text-center space-y-6">
+                  <div className="w-24 h-24 rounded-full bg-[#0f1f3a] border-2 border-[#1a3a5c] flex items-center justify-center text-[#3bb5ff]/20">{Ico.cube}</div>
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-black text-white uppercase tracking-tighter">No Volume Selected</h2>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest leading-loose">Pick a vault from the volumes tab<br />to browse your encrypted files.</p>
+                  </div>
+                  <button onClick={() => setTab('volumes')} className="px-8 py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-[#3bb5ff]/20 active:scale-95 transition-transform">Go to Volumes</button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <button onClick={goBack} className="p-2 -ml-2 text-[#3bb5ff] active:bg-[#3bb5ff]/10 rounded-full transition-colors">{Ico.chevronLeft}</button>
                       <div className="flex flex-col min-w-0">
-                        <div className="text-sm font-bold truncate text-white uppercase tracking-tight">{db.split(/[\/\\]/).pop().replace('.db', '')}</div>
-                        <div className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{selectedDb === db ? 'Currently Open' : 'Tap to unlock'}</div>
+                        <span className="text-[9px] font-black text-[#3bb5ff] uppercase tracking-widest opacity-60 truncate">{selectedDb}</span>
+                        <h2 className="text-lg font-black text-white truncate tracking-tight uppercase leading-none">{currentPath === '.' ? 'Root' : currentPath.split('/').pop()}</h2>
                       </div>
                     </div>
-                    <button onClick={() => setBottomSheet({ title: 'Volume Options', content: <VolumeOptionsMenu db={db} /> })} className="p-4 -mr-2 text-gray-600 active:text-white transition-colors">{Ico.menu}</button>
+                    <div className="flex gap-1">
+                      <button onClick={() => fetchFiles(currentPath)} className="p-3 bg-[#0f1f3a] text-gray-400 rounded-xl border border-[#1a3a5c] active:text-[#3bb5ff] transition-colors">{Ico.version}</button>
+                      <button onClick={() => setBottomSheet({ title: 'New Folder', content: <div className="space-y-4"><input autoFocus placeholder="Folder name..." id="new-folder-name" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm" /><button onClick={async () => { const n = document.getElementById('new-folder-name').value; if (n) { await fetch('/api/folders/make', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: selectedDb, folder_name: n, parent_path: currentPath, id_based: false }) }); fetchFiles(currentPath); setBottomSheet(null); } }} className="w-full py-4 bg-[#3bb5ff] text-[#0a1628] rounded-xl font-black uppercase tracking-widest text-[10px]">Create Folder</button></div> })} className="p-3 bg-[#0f1f3a] text-gray-400 rounded-xl border border-[#1a3a5c] active:text-[#3bb5ff] transition-colors">{Ico.folderOpen}</button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3">
+                    {loadingFiles ? (
+                      <div className="flex flex-col items-center justify-center py-20">
+                        <div className="animate-spin text-[#3bb5ff] mb-4">{Ico.version}</div>
+                        <p className="text-[10px] font-black text-[#3bb5ff] uppercase tracking-[0.3em]">Browsing Vault...</p>
+                      </div>
+                    ) : isRetrying ? (
+                      <div className="flex flex-col items-center justify-center h-full py-20">
+                        <div className="mb-6 animate-spin text-[#3bb5ff]">{Ico.version}</div>
+                        <p className="text-sm font-bold uppercase tracking-widest text-[#3bb5ff]">Connecting to Volume...</p>
+                        <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Attempt {retryCountRef.current} of {maxRetries}</p>
+                      </div>
+                    ) : (
+                      filteredFiles.map(item => (
+                        <div key={item.itemid || item.displayName}
+                          className={`group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] ${selectedItems.find(i => (i.itemid && i.itemid === item.itemid) || (i.displayName === item.displayName)) ? 'bg-[#3bb5ff]/10 border-[#3bb5ff] shadow-[0_0_20px_rgba(59,181,255,0.1)]' : 'bg-[#0a1628]/80 border-[#1a3a5c] shadow-lg'}`}
+                        >
+                          <div onClick={() => toggleSelection(item)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedItems.find(i => (i.itemid && i.itemid === item.itemid) || (i.displayName === item.displayName)) ? 'bg-[#3bb5ff] border-[#3bb5ff]' : 'border-[#1a3a5c] bg-[#060d1a]'}`}>
+                            {selectedItems.find(i => (i.itemid && i.itemid === item.itemid) || (i.displayName === item.displayName)) && <div className="w-2.5 h-2.5 bg-[#0a1628] rounded-sm" />}
+                          </div>
+                          <div onClick={() => item.type === 'folder' ? navigateTo(item.displayName) : null} className="flex-1 min-w-0 flex items-center gap-3">
+                            <span className={`${item.type === 'folder' ? 'text-[#3bb5ff]' : 'text-gray-500'}`}>{item.type === 'folder' ? Ico.folder : Ico.file}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-bold text-white truncate uppercase tracking-tight leading-tight">{item.displayName}</div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[8px] font-black text-[#3bb5ff] uppercase tracking-widest px-1.5 py-0.5 bg-[#3bb5ff]/10 rounded-md">v{item.version}</span>
+                                {item.encryption_mode === 'not_automatic' && <span className="text-gray-600">{Ico.shield}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <button onClick={() => setBottomSheet({ title: item.displayName, content: <ItemOptionsMenu item={item} /> })} className="p-3 -mr-2 text-gray-600 hover:text-white transition-colors">{Ico.menu}</button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === 'volumes' && (
+            <div className="space-y-8 pt-6">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex flex-col">
+                  <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">Vaults</h2>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Your encrypted containers</p>
+                </div>
+                <button onClick={() => setShowCreateVolume(true)} className="p-4 bg-[#3bb5ff] text-[#0a1628] rounded-2xl shadow-lg shadow-[#3bb5ff]/30 active:scale-90 transition-all">{Ico.plus}</button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2"><span className="text-[#3bb5ff]/50">{Ico.cube}</span><h3 className="text-[10px] uppercase font-bold text-[#3bb5ff]/50 tracking-widest">Active</h3></div>
+                  <button onClick={() => setModal({ title: 'Add External Volume', content: <RemoteFolderPicker showFiles onSelect={p => { if (p.endsWith('.db')) { setExternalVolumes(prev => { const u = [...new Set([...prev, p])]; localStorage.setItem('mob_externalVolumes', JSON.stringify(u)); return u; }); fetchDbs(); setModal(null); showToast('Volume added', 'success'); } else showToast('Must be .db', 'error'); }} onCancel={() => setModal(null)} /> })} className="text-[10px] text-[#3bb5ff] font-bold btn-touch uppercase">+ External</button>
+                </div>
+                <div className="grid gap-3">
+                  {allVolumes.map(db => (
+                    <div key={db} className={`group flex items-center justify-between p-5 rounded-3xl border transition-all ${selectedDb === db ? 'bg-gradient-to-br from-[#0a1628] to-[#0f1f3a] border-[#3bb5ff] shadow-xl' : 'bg-[#0a1628]/60 border-[#1a3a5c]'}`}>
+                      <div onClick={() => { if (selectedDb === db) fetchFiles(currentPath); else setSelectedDb(db); setTab('explorer'); }} className="flex-1 flex items-center gap-4 min-w-0 mr-2 py-1">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${selectedDb === db ? 'bg-[#3bb5ff] text-[#0a1628]' : 'bg-[#0f1f3a] text-gray-600'}`}>{Ico.cube}</div>
+                        <div className="flex flex-col min-w-0">
+                          <div className="text-sm font-bold truncate text-white uppercase tracking-tight">{db.split(/[\/\\]/).pop().replace('.db', '')}</div>
+                          <div className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{selectedDb === db ? 'Currently Open' : 'Tap to unlock'}</div>
+                        </div>
+                      </div>
+                      <button onClick={() => setBottomSheet({ title: 'Volume Options', content: <VolumeOptionsMenu db={db} /> })} className="p-4 -mr-2 text-gray-600 active:text-white transition-colors">{Ico.menu}</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={() => setModal({ title: 'Import .vov Package', content: <div className="space-y-3"><RemoteFolderPicker showFiles onSelect={async p => { if (p.endsWith('.vov')) { try { await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vov_path: p }) }); fetchDbs(); showToast('Imported', 'success'); setModal(null); } catch (e) { showToast(e.message, 'error'); } } else showToast('Must select .vov', 'error'); }} onCancel={() => setModal(null)} /></div> })} className="w-full py-5 bg-[#0f1f3a]/40 border-2 border-dashed border-[#1a3a5c] rounded-3xl text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] btn-touch flex items-center justify-center gap-3 active:border-[#3bb5ff] active:text-[#3bb5ff] transition-all">{Ico.import} Import .VOV Package</button>
+            </div>
+          )}
+
+          {tab === 'queue' && (
+            <div className="space-y-6 pt-6">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex flex-col">
+                  <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">Activity</h2>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Ongoing operations</p>
+                </div>
+                <button onClick={() => setQueue([])} className="px-4 py-2 bg-[#0f1f3a] text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest active:text-red-400 border border-[#1a3a5c]">Clear All</button>
+              </div>
+              <div className="space-y-4">
+                {queue.length === 0 ? (
+                  <div className="text-center py-20 opacity-30 flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-600 mb-4" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">No active tasks</p>
+                  </div>
+                ) : queue.map(item => (
+                  <div key={item.id} className="bg-[#0a1628] border border-[#1a3a5c] rounded-3xl overflow-hidden shadow-xl">
+                    <div className="p-5 flex items-center justify-between border-b border-[#1a3a5c]/50 bg-[#0f1f3a]/30">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={`w-2 h-2 rounded-full animate-pulse ${item.status === 'running' ? 'bg-[#3bb5ff]' : item.status === 'completed' ? 'bg-green-500' : item.status === 'failed' ? 'bg-red-500' : 'bg-gray-600'}`} />
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-bold text-white truncate uppercase tracking-tight">{item.label}</span>
+                          <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">{item.type} • {item.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-black/40 max-h-40 overflow-y-auto font-mono text-[9px] leading-relaxed text-[#3bb5ff]/80 custom-scrollbar whitespace-pre-wrap">
+                      {item.log && item.log.length > 0 ? item.log.join('') : 'Waiting for output...'}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
+          )}
 
-            <button onClick={() => setModal({ title: 'Import .vov Package', content: <div className="space-y-3"><RemoteFolderPicker showFiles onSelect={async p => { if (p.endsWith('.vov')) { try { await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vov_path: p }) }); fetchDbs(); showToast('Imported', 'success'); setModal(null); } catch (e) { showToast(e.message, 'error'); } } else showToast('Must select .vov', 'error'); }} onCancel={() => setModal(null)} /></div> })} className="w-full py-5 bg-[#0f1f3a]/40 border-2 border-dashed border-[#1a3a5c] rounded-3xl text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] btn-touch flex items-center justify-center gap-3 active:border-[#3bb5ff] active:text-[#3bb5ff] transition-all">{Ico.import} Import .VOV Package</button>
-          </div>
-        )}
-
-        {tab === 'queue' && (
-          <div className="space-y-6 pt-6">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex flex-col">
-                <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">Activity</h2>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Ongoing operations</p>
+          {tab === 'settings' && (
+            <div className="space-y-8 pt-6">
+              <div className="flex flex-col px-1">
+                <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">Settings</h2>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Global configuration</p>
               </div>
-              <button onClick={() => setQueue([])} className="px-4 py-2 bg-[#0f1f3a] text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest active:text-red-400 border border-[#1a3a5c]">Clear All</button>
-            </div>
-            <div className="space-y-4">
-              {queue.length === 0 ? (
-                <div className="text-center py-20 opacity-30 flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-600 mb-4" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">No active tasks</p>
+              {!localConfig ? (
+                <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                  <div className="animate-spin text-[#3bb5ff]">{Ico.version}</div>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Fetching configuration...</p>
                 </div>
-              ) : queue.map(item => (
-                <div key={item.id} className="bg-[#0a1628] border border-[#1a3a5c] rounded-3xl overflow-hidden shadow-xl">
-                  <div className="p-5 flex items-center justify-between border-b border-[#1a3a5c]/50 bg-[#0f1f3a]/30">
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className={`w-2 h-2 rounded-full animate-pulse ${item.status === 'running' ? 'bg-[#3bb5ff]' : item.status === 'completed' ? 'bg-green-500' : item.status === 'failed' ? 'bg-red-500' : 'bg-gray-600'}`} />
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-bold text-white truncate uppercase tracking-tight">{item.label}</span>
-                        <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">{item.type} • {item.status}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-black/40 max-h-40 overflow-y-auto font-mono text-[9px] leading-relaxed text-[#3bb5ff]/80 custom-scrollbar whitespace-pre-wrap">
-                    {item.log && item.log.length > 0 ? item.log.join('') : 'Waiting for output...'}
-                  </div>
-                </div>
-              ))}
+              ) : (
+                <div className="space-y-10">{Object.entries(localConfig).map(([section, data]) => renderSection(section, data, [section]))}</div>
+              )}
             </div>
-          </div>
-        )}
-
-        {tab === 'settings' && (
-          <div className="space-y-8 pt-6">
-            <div className="flex flex-col px-1">
-              <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">Settings</h2>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Global configuration</p>
-            </div>
-            {!localConfig ? (
-              <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                <div className="animate-spin text-[#3bb5ff]">{Ico.version}</div>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Fetching configuration...</p>
-              </div>
-            ) : (
-              <div className="space-y-10">{Object.entries(localConfig).map(([section, data]) => renderSection(section, data, [section]))}</div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {selectedItems.length > 0 && (
-        <div className="fixed bottom-24 left-4 right-4 bg-[#0a1628]/95 backdrop-blur-xl border border-[#3bb5ff]/40 px-6 py-4 rounded-3xl flex items-center justify-between z-40 shadow-2xl">
-          <span className="text-xs text-[#3bb5ff] font-black uppercase">{selectedItems.length} SELECTED</span>
-          <div className="flex gap-4">
-            <button onClick={() => setBottomSheet({ title: 'Item Options', content: <ItemOptionsMenu items={selectedItems} /> })} className="p-3 bg-[#3bb5ff]/10 text-[#3bb5ff] rounded-xl btn-touch">{Ico.menu}</button>
-            <button onClick={clearSelection} className="p-3 text-gray-500 btn-touch hover:text-white">{Ico.close}</button>
-          </div>
+          )}
         </div>
-      )}
+
+        {selectedItems.length > 0 && (
+          <div className="fixed bottom-24 left-4 right-4 bg-[#0a1628]/95 backdrop-blur-xl border border-[#3bb5ff]/40 px-6 py-4 rounded-3xl flex items-center justify-between z-40 shadow-2xl">
+            <span className="text-xs text-[#3bb5ff] font-black uppercase">{selectedItems.length} SELECTED</span>
+            <div className="flex gap-4">
+              <button onClick={() => setBottomSheet({ title: 'Item Options', content: <ItemOptionsMenu items={selectedItems} /> })} className="p-3 bg-[#3bb5ff]/10 text-[#3bb5ff] rounded-xl btn-touch">{Ico.menu}</button>
+              <button onClick={clearSelection} className="p-3 text-gray-500 btn-touch hover:text-white">{Ico.close}</button>
+            </div>
+          </div>
+        )}
 
   // Download execution helper
   const executeDownload = (itemsToDownload, strictnessMode = 'NA') => {
     const needsPassword = (i) => {
       if (i.encryption === 'not_automatic' || i.encryption_mode === 'not_automatic') return true;
       if (i.type === 'folder' && Array.isArray(i.versions)) return i.versions.some(v => v.has_hash || v.encryption === 'not_automatic');
-      if (i.password_seed_hash) return true;
-      return false;
+        if (i.password_seed_hash) return true;
+        return false;
     };
-    const encryptedItems = itemsToDownload.filter(needsPassword);
-    if (encryptedItems.length) {
-      setModal({ title: 'Passwords Required', content: <PasswordPromptModalContent items={encryptedItems.map(i => ({ id: i.itemid, name: i.displayName, hash: i.password_seed_hash || '' }))} onConfirm={(passwords) => { setModal(null); doDownload(itemsToDownload, passwords, strictnessMode); }} /> });
+        const encryptedItems = itemsToDownload.filter(needsPassword);
+        if (encryptedItems.length) {
+          setModal({ title: 'Passwords Required', content: <PasswordPromptModalContent items={encryptedItems.map(i => ({ id: i.itemid, name: i.displayName, hash: i.password_seed_hash || '' }))} onConfirm={(passwords) => { setModal(null); doDownload(itemsToDownload, passwords, strictnessMode); }} /> });
     } else {
-      doDownload(itemsToDownload, {}, strictnessMode);
-      setModal(null);
+          doDownload(itemsToDownload, {}, strictnessMode);
+        setModal(null);
     }
   };
   const doDownload = (itemsToDownload, passwords, strictnessMode) => {
     const downloadFolder = localStorage.getItem('VAULT_OPUS_download_folder') || '/storage/emulated/0/Download';
     itemsToDownload.forEach(item => {
       const itemPath = currentPath === '.' ? item.displayName : `${currentPath}/${item.displayName}`;
-      const args = ['download', itemPath, '-db', selectedDb, '--download_folder', downloadFolder];
-      if (Object.keys(passwords).length) args.push('--passwords', JSON.stringify(passwords));
-      if (strictnessMode !== 'NA') args.push('--strictness_mode', strictnessMode);
-      runCmd(args, item.displayName, 'download');
+        const args = ['download', itemPath, '-db', selectedDb, '--download_folder', downloadFolder];
+        if (Object.keys(passwords).length) args.push('--passwords', JSON.stringify(passwords));
+        if (strictnessMode !== 'NA') args.push('--strictness_mode', strictnessMode);
+        runCmd(args, item.displayName, 'download');
     });
   };
 
   // Volume tabs
   const renderVolumes = () => (
-    <div className="flex flex-col h-full">
-      <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Volumes</h2>
-        <div className="flex gap-2">
-          <button onClick={async () => { await fetchDbs(); showToast('Volume list refreshed', 'success'); }} className="p-2 bg-[#0f1f3a] border border-[#1a3a5c] text-gray-300 rounded-xl btn-touch" title="Refresh Volume List">{Ico.version}</button>
-          <button onClick={() => setModal({ title: 'Sharables', content: <SharablesModalContent /> })} className="p-2 bg-[#0f1f3a] border border-[#1a3a5c] text-[#3bb5ff] rounded-xl btn-touch" title="Open Sharables">{Ico.externalLink}</button>
-          <button onClick={() => setShowCreateVolume(true)} className="p-2 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl btn-touch" title="Create Volume">{Ico.plus}</button>
-        </div>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-6">
-        {recentVolumes.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2 mb-3"><span className="text-[#3bb5ff]/50">{Ico.clock}</span><h3 className="text-[10px] uppercase font-bold text-[#3bb5ff]/50">Recent</h3></div>
-            <div className="space-y-2">{recentVolumes.map(db => (
-              <div key={db} className={`flex items-center justify-between px-4 py-3 rounded-xl border btn-touch ${selectedDb === db ? 'bg-[#3bb5ff]/15 border-[#3bb5ff]' : 'bg-[#0f1f3a]/40 border-[#1a3a5c]'}`}>
-                <div
-                  onClick={() => { if (selectedDb === db) fetchFiles(currentPath); else setSelectedDb(db); setTab('explorer'); }}
-                  className="flex-1 flex items-center gap-3 min-w-0 mr-2 py-1"
-                >
-                  <span className={selectedDb === db ? 'text-[#3bb5ff]' : 'text-gray-500'}>{Ico.cube}</span>
-                  <div className="text-sm font-bold truncate text-white">{db.split(/[\/\\]/).pop().replace('.db', '')}</div>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    updateRecentVolumes(prev => prev.filter(d => d !== db));
-                    if (selectedDb === db) setSelectedDb('');
-                    showToast('Removed', 'success');
-                  }}
-                  className="p-3 -m-1.5 text-gray-600 hover:text-red-400 rounded-lg transition-colors flex-shrink-0"
-                >
-                  {Ico.close}
-                </button>
-              </div>
-            ))}</div>
-          </section>
-        )}
-        <section>
-          <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><span className="text-[#3bb5ff]/50">{Ico.cube}</span><h3 className="text-[10px] uppercase font-bold text-[#3bb5ff]/50">Available</h3></div><button onClick={() => setModal({ title: 'Add External Volume', content: <RemoteFolderPicker showFiles onSelect={p => { if (p.endsWith('.db')) { setExternalVolumes(prev => { const u = [...new Set([...prev, p])]; localStorage.setItem('mob_externalVolumes', JSON.stringify(u)); return u; }); fetchDbs(); setModal(null); showToast('Volume added', 'success'); } else showToast('Must be .db', 'error'); }} onCancel={() => setModal(null)} /> })} className="text-[10px] text-[#3bb5ff] font-bold btn-touch uppercase">+ External</button></div>
-          <div className="space-y-2">{dbs.map(db => (
-            <div key={db} className={`flex items-center justify-between px-4 py-3 rounded-xl border btn-touch ${selectedDb === db ? 'bg-[#3bb5ff]/15 border-[#3bb5ff]' : 'bg-[#0f1f3a]/40 border-[#1a3a5c]'}`}>
-              <div
-                onClick={() => { if (selectedDb === db) fetchFiles(currentPath); else setSelectedDb(db); setTab('explorer'); }}
-                className="flex-1 flex items-center gap-3 min-w-0 mr-2 py-1"
-              >
-                <span className={selectedDb === db ? 'text-[#3bb5ff]' : 'text-gray-500'}>{Ico.cube}</span>
-                <span className="text-sm font-bold text-white truncate">{db.split(/[\/\\]/).pop().replace('.db', '')}</span>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setModal({ title: 'Volume Options', content: <VolumeOptionsMenu db={db} /> });
-                }}
-                className="p-3 -m-1.5 text-gray-500 hover:text-white btn-touch"
-              >
-                {Ico.menu}
-              </button>
-            </div>
-          ))}</div>
-        </section>
-        <button onClick={() => setModal({ title: 'Import .vov Package', content: <div className="space-y-3"><RemoteFolderPicker showFiles onSelect={async p => { if (p.endsWith('.vov')) { try { await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vov_path: p }) }); fetchDbs(); showToast('Imported', 'success'); setModal(null); } catch (e) { showToast(e.message, 'error'); } } else showToast('Must select .vov', 'error'); }} onCancel={() => setModal(null)} /></div> })} className="w-full py-4 bg-[#0f1f3a] border border-[#1a3a5c] rounded-2xl text-xs text-gray-300 font-bold uppercase btn-touch flex items-center justify-center gap-2">{Ico.import} Import VOV Package</button>
-      </div>
-    </div>
-  );
-  const renderQueue = () => (
-    <div className="flex flex-col h-full">
-      <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between"><h2 className="text-lg font-bold text-white">Queue</h2><button onClick={() => setQueue(q => q.filter(i => i.status === 'running' || i.status === 'queued'))} className="text-xs text-gray-400 btn-touch">Clear All</button></div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">{queue.length === 0 ? <div className="text-center py-20 text-gray-500 text-sm">No active tasks</div> : queue.slice().reverse().map(item => (<div key={item.id} className="flex items-center gap-3 px-3 py-2 bg-[#0a1628] border border-[#1a3a5c] rounded-xl"><div className={`w-2 h-2 rounded-full ${item.status === 'completed' ? 'bg-green-400' : item.status === 'failed' ? 'bg-red-400' : item.status === 'running' ? 'bg-[#3bb5ff] animate-pulse' : 'bg-gray-500'}`} /><div className="flex-1"><div className="text-xs text-gray-200 truncate">{item.name}</div><div className="text-[10px] text-gray-500 capitalize">{item.status}</div></div>{item.progress > 0 && <div className="text-xs text-[#3bb5ff]">{item.progress}%</div>}</div>))}</div>
-    </div>
-  );
-
-  const renderTerminal = () => (
-    <div className="flex flex-col h-full">
-      <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between"><h2 className="text-lg font-bold text-white">Terminal</h2><button onClick={() => setTerminalOutput('')} className="text-xs text-gray-400 btn-touch">Clear</button></div>
-      <div className="flex-1 overflow-y-auto p-3 bg-[#060d1a]"><pre className="text-xs text-green-400 font-mono whitespace-pre-wrap break-all">{terminalOutput || 'No output yet'}</pre></div>
-    </div>
-  );
-
-  return (
-    <div className="flex flex-col h-full safe-top bg-[#060d1a]">
-      <header className="flex items-center justify-between px-6 py-4 bg-[#0a1628] border-b border-[#1a3a5c] shadow-lg">
-        <div className="flex items-center gap-3">
-          <img src="/logo/image.png" alt="Logo" className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(59,181,255,0.4)]" onError={(e) => e.target.style.display = 'none'} />
-          <div><h1 className="text-lg font-black text-white tracking-tighter">VAULT OPUS</h1>{selectedDb && <p className="text-[10px] text-[#3bb5ff] font-bold uppercase mt-1">{selectedDb.replace('.db', '')}</p>}</div>
-        </div>
-        <div className="flex items-center gap-2">
-          {connectionStatus === 'disconnected' && <button onClick={connectWS} className="p-2 text-red-500 btn-touch">{Ico.alert}</button>}
-        </div>
-      </header>
-
-      <div className="flex-1 overflow-hidden relative">
-        {tab === 'explorer' && renderExplorer()}
-        {tab === 'volumes' && renderVolumes()}
-        {tab === 'queue' && renderQueue()}
-        {tab === 'terminal' && renderTerminal()}
-        {tab === 'settings' && <SettingsTabContent config={config} fetchConfig={fetchConfig} showToast={showToast} />}
-      </div>
-
-      <nav className="flex items-center justify-around bg-[#0a1628] border-t border-[#1a3a5c] py-4 safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.4)]">
-        {[
-          { id: 'explorer', ico: Ico.folder, label: 'FILES' },
-          { id: 'volumes', ico: Ico.cube, label: 'VAULTS' },
-          { id: 'queue', ico: Ico.clock, label: 'TASKS' },
-          { id: 'settings', ico: Ico.settings, label: 'SYSTEM' }
-        ].map(n => (
-          <button
-            key={n.id}
-            onClick={() => setTab(n.id)}
-            className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${tab === n.id ? 'text-[#3bb5ff] scale-110' : 'text-gray-600'}`}
-          >
-            <div className={`p-1 rounded-xl ${tab === n.id ? 'bg-[#3bb5ff]/10' : ''}`}>{n.ico}</div>
-            <span className={`text-[8px] font-black tracking-[0.2em] ${tab === n.id ? 'opacity-100' : 'opacity-40'}`}>{n.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <Sheet open={!!bottomSheet} onClose={() => setBottomSheet(null)} title={bottomSheet?.title}>{bottomSheet?.content}</Sheet>
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal?.title} wide={modal?.wide}>{modal?.content}</Modal>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-      {/* Input required from task */}
-      {promptQueue.length > 0 && (
-        <Modal open onClose={() => { if (ws) ws.send(JSON.stringify({ action: 'input', data: 'cancel', task_id: promptQueue[0].taskId })); setPromptQueue(prev => prev.slice(1)); }} title="Input Required">
-          <div className="space-y-4">
-            <p className="text-sm text-gray-400 leading-relaxed font-bold uppercase tracking-widest opacity-70">{promptQueue[0].text}</p>
-            <input data-prompt-input type={promptQueue[0].isPassword ? 'password' : 'text'} autoFocus className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-4 text-sm text-white focus:border-[#3bb5ff] outline-none" onKeyDown={e => { if (e.key === 'Enter') { if (ws) ws.send(JSON.stringify({ action: 'input', data: e.target.value, task_id: promptQueue[0].taskId })); setPromptQueue(prev => prev.slice(1)); } }} />
-            <div className="flex gap-3">
-              <button onClick={() => { if (ws) ws.send(JSON.stringify({ action: 'input', data: 'cancel', task_id: promptQueue[0].taskId })); setPromptQueue(prev => prev.slice(1)); }} className="flex-1 py-4 bg-[#0f1f3a] text-gray-300 rounded-xl border border-[#1a3a5c] font-bold btn-touch uppercase tracking-widest text-[10px]">Cancel</button>
-              <button onClick={() => { const inp = document.querySelector('[data-prompt-input]'); if (ws) ws.send(JSON.stringify({ action: 'input', data: inp ? inp.value : '', task_id: promptQueue[0].taskId })); setPromptQueue(prev => prev.slice(1)); }} className="flex-1 py-4 bg-[#3bb5ff] text-[#060d1a] rounded-xl font-black uppercase tracking-widest text-[10px] btn-touch">Submit</button>
+        <div className="flex flex-col h-full">
+          <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white">Volumes</h2>
+            <div className="flex gap-2">
+              <button onClick={async () => { await fetchDbs(); showToast('Volume list refreshed', 'success'); }} className="p-2 bg-[#0f1f3a] border border-[#1a3a5c] text-gray-300 rounded-xl btn-touch" title="Refresh Volume List">{Ico.version}</button>
+              <button onClick={() => setModal({ title: 'Sharables', content: <SharablesModalContent /> })} className="p-2 bg-[#0f1f3a] border border-[#1a3a5c] text-[#3bb5ff] rounded-xl btn-touch" title="Open Sharables">{Ico.externalLink}</button>
+              <button onClick={() => setShowCreateVolume(true)} className="p-2 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl btn-touch" title="Create Volume">{Ico.plus}</button>
             </div>
           </div>
-        </Modal>
-      )}
+          <div className="flex-1 overflow-y-auto p-3 space-y-6">
+            {recentVolumes.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 mb-3"><span className="text-[#3bb5ff]/50">{Ico.clock}</span><h3 className="text-[10px] uppercase font-bold text-[#3bb5ff]/50">Recent</h3></div>
+                <div className="space-y-2">{recentVolumes.map(db => (
+                  <div key={db} className={`flex items-center justify-between px-4 py-3 rounded-xl border btn-touch ${selectedDb === db ? 'bg-[#3bb5ff]/15 border-[#3bb5ff]' : 'bg-[#0f1f3a]/40 border-[#1a3a5c]'}`}>
+                    <div
+                      onClick={() => { if (selectedDb === db) fetchFiles(currentPath); else setSelectedDb(db); setTab('explorer'); }}
+                      className="flex-1 flex items-center gap-3 min-w-0 mr-2 py-1"
+                    >
+                      <span className={selectedDb === db ? 'text-[#3bb5ff]' : 'text-gray-500'}>{Ico.cube}</span>
+                      <div className="text-sm font-bold truncate text-white">{db.split(/[\/\\]/).pop().replace('.db', '')}</div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateRecentVolumes(prev => prev.filter(d => d !== db));
+                        if (selectedDb === db) setSelectedDb('');
+                        showToast('Removed', 'success');
+                      }}
+                      className="p-3 -m-1.5 text-gray-600 hover:text-red-400 rounded-lg transition-colors flex-shrink-0"
+                    >
+                      {Ico.close}
+                    </button>
+                  </div>
+                ))}</div>
+              </section>
+            )}
+            <section>
+              <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><span className="text-[#3bb5ff]/50">{Ico.cube}</span><h3 className="text-[10px] uppercase font-bold text-[#3bb5ff]/50">Available</h3></div><button onClick={() => setModal({ title: 'Add External Volume', content: <RemoteFolderPicker showFiles onSelect={p => { if (p.endsWith('.db')) { setExternalVolumes(prev => { const u = [...new Set([...prev, p])]; localStorage.setItem('mob_externalVolumes', JSON.stringify(u)); return u; }); fetchDbs(); setModal(null); showToast('Volume added', 'success'); } else showToast('Must be .db', 'error'); }} onCancel={() => setModal(null)} /> })} className="text-[10px] text-[#3bb5ff] font-bold btn-touch uppercase">+ External</button></div>
+              <div className="space-y-2">{dbs.map(db => (
+                <div key={db} className={`flex items-center justify-between px-4 py-3 rounded-xl border btn-touch ${selectedDb === db ? 'bg-[#3bb5ff]/15 border-[#3bb5ff]' : 'bg-[#0f1f3a]/40 border-[#1a3a5c]'}`}>
+                  <div
+                    onClick={() => { if (selectedDb === db) fetchFiles(currentPath); else setSelectedDb(db); setTab('explorer'); }}
+                    className="flex-1 flex items-center gap-3 min-w-0 mr-2 py-1"
+                  >
+                    <span className={selectedDb === db ? 'text-[#3bb5ff]' : 'text-gray-500'}>{Ico.cube}</span>
+                    <span className="text-sm font-bold text-white truncate">{db.split(/[\/\\]/).pop().replace('.db', '')}</span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setModal({ title: 'Volume Options', content: <VolumeOptionsMenu db={db} /> });
+                    }}
+                    className="p-3 -m-1.5 text-gray-500 hover:text-white btn-touch"
+                  >
+                    {Ico.menu}
+                  </button>
+                </div>
+              ))}</div>
+            </section>
+            <button onClick={() => setModal({ title: 'Import .vov Package', content: <div className="space-y-3"><RemoteFolderPicker showFiles onSelect={async p => { if (p.endsWith('.vov')) { try { await fetch('/api/dbs/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vov_path: p }) }); fetchDbs(); showToast('Imported', 'success'); setModal(null); } catch (e) { showToast(e.message, 'error'); } } else showToast('Must select .vov', 'error'); }} onCancel={() => setModal(null)} /></div> })} className="w-full py-4 bg-[#0f1f3a] border border-[#1a3a5c] rounded-2xl text-xs text-gray-300 font-bold uppercase btn-touch flex items-center justify-center gap-2">{Ico.import} Import VOV Package</button>
+          </div>
+        </div>
+        );
+  const renderQueue = () => (
+        <div className="flex flex-col h-full">
+          <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between"><h2 className="text-lg font-bold text-white">Queue</h2><button onClick={() => setQueue(q => q.filter(i => i.status === 'running' || i.status === 'queued'))} className="text-xs text-gray-400 btn-touch">Clear All</button></div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">{queue.length === 0 ? <div className="text-center py-20 text-gray-500 text-sm">No active tasks</div> : queue.slice().reverse().map(item => (<div key={item.id} className="flex items-center gap-3 px-3 py-2 bg-[#0a1628] border border-[#1a3a5c] rounded-xl"><div className={`w-2 h-2 rounded-full ${item.status === 'completed' ? 'bg-green-400' : item.status === 'failed' ? 'bg-red-400' : item.status === 'running' ? 'bg-[#3bb5ff] animate-pulse' : 'bg-gray-500'}`} /><div className="flex-1"><div className="text-xs text-gray-200 truncate">{item.name}</div><div className="text-[10px] text-gray-500 capitalize">{item.status}</div></div>{item.progress > 0 && <div className="text-xs text-[#3bb5ff]">{item.progress}%</div>}</div>))}</div>
+        </div>
+        );
 
-      {/* Onboarding UI */}
-      {showTerms && (
-        <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
-          <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
-            <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)] animate-pulse">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#3bb5ff" strokeWidth="2" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+  const renderTerminal = () => (
+        <div className="flex flex-col h-full">
+          <div className="px-4 py-3 bg-[#0a1628] border-b border-[#1a3a5c] flex items-center justify-between"><h2 className="text-lg font-bold text-white">Terminal</h2><button onClick={() => setTerminalOutput('')} className="text-xs text-gray-400 btn-touch">Clear</button></div>
+          <div className="flex-1 overflow-y-auto p-3 bg-[#060d1a]"><pre className="text-xs text-green-400 font-mono whitespace-pre-wrap break-all">{terminalOutput || 'No output yet'}</pre></div>
+        </div>
+        );
+
+        return (
+        <div className="flex flex-col h-full safe-top bg-[#060d1a]">
+          <header className="flex items-center justify-between px-6 py-4 bg-[#0a1628] border-b border-[#1a3a5c] shadow-lg">
+            <div className="flex items-center gap-3">
+              <img src="/logo/image.png" alt="Logo" className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(59,181,255,0.4)]" onError={(e) => e.target.style.display = 'none'} />
+              <div><h1 className="text-lg font-black text-white tracking-tighter">VAULT OPUS</h1>{selectedDb && <p className="text-[10px] text-[#3bb5ff] font-bold uppercase mt-1">{selectedDb.replace('.db', '')}</p>}</div>
             </div>
-            <div className="text-center space-y-1">
-              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Our Terms and Policy</h2>
-              <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Please review before proceeding</p>
+            <div className="flex items-center gap-2">
+              {connectionStatus === 'disconnected' && <button onClick={connectWS} className="p-2 text-red-500 btn-touch">{Ico.alert}</button>}
             </div>
-            <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl overflow-y-auto max-h-[50vh] custom-scrollbar text-left">
-              <MiniMarkdown content={`# VAULT OPUS — TERMS OF SERVICE & PRIVACY POLICY
+          </header>
+
+          <div className="flex-1 overflow-hidden relative">
+            {tab === 'explorer' && renderExplorer()}
+            {tab === 'volumes' && renderVolumes()}
+            {tab === 'queue' && renderQueue()}
+            {tab === 'terminal' && renderTerminal()}
+            {tab === 'settings' && <SettingsTabContent config={config} fetchConfig={fetchConfig} showToast={showToast} />}
+          </div>
+
+          <nav className="flex items-center justify-around bg-[#0a1628] border-t border-[#1a3a5c] py-4 safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.4)]">
+            {[
+              { id: 'explorer', ico: Ico.folder, label: 'FILES' },
+              { id: 'volumes', ico: Ico.cube, label: 'VAULTS' },
+              { id: 'queue', ico: Ico.clock, label: 'TASKS' },
+              { id: 'settings', ico: Ico.settings, label: 'SYSTEM' }
+            ].map(n => (
+              <button
+                key={n.id}
+                onClick={() => setTab(n.id)}
+                className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${tab === n.id ? 'text-[#3bb5ff] scale-110' : 'text-gray-600'}`}
+              >
+                <div className={`p-1 rounded-xl ${tab === n.id ? 'bg-[#3bb5ff]/10' : ''}`}>{n.ico}</div>
+                <span className={`text-[8px] font-black tracking-[0.2em] ${tab === n.id ? 'opacity-100' : 'opacity-40'}`}>{n.label}</span>
+              </button>
+            ))}
+        </div>
+
+        <Sheet open={!!bottomSheet} onClose={() => setBottomSheet(null)} title={bottomSheet?.title}>{bottomSheet?.content}</Sheet>
+        <Modal open={!!modal} onClose={() => setModal(null)} title={modal?.title} wide={modal?.wide}>{modal?.content}</Modal>
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+        {/* Input required from task */}
+        {promptQueue.length > 0 && (
+          <Modal open onClose={() => { if (ws) ws.send(JSON.stringify({ action: 'input', data: 'cancel', task_id: promptQueue[0].taskId })); setPromptQueue(prev => prev.slice(1)); }} title="Input Required">
+            <div className="space-y-4">
+              <p className="text-sm text-gray-400 leading-relaxed font-bold uppercase tracking-widest opacity-70">{promptQueue[0].text}</p>
+              <input data-prompt-input type={promptQueue[0].isPassword ? 'password' : 'text'} autoFocus className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-4 text-sm text-white focus:border-[#3bb5ff] outline-none" onKeyDown={e => { if (e.key === 'Enter') { if (ws) ws.send(JSON.stringify({ action: 'input', data: e.target.value, task_id: promptQueue[0].taskId })); setPromptQueue(prev => prev.slice(1)); } }} />
+              <div className="flex gap-3">
+                <button onClick={() => { if (ws) ws.send(JSON.stringify({ action: 'input', data: 'cancel', task_id: promptQueue[0].taskId })); setPromptQueue(prev => prev.slice(1)); }} className="flex-1 py-4 bg-[#0f1f3a] text-gray-300 rounded-xl border border-[#1a3a5c] font-bold btn-touch uppercase tracking-widest text-[10px]">Cancel</button>
+                <button onClick={() => { const inp = document.querySelector('[data-prompt-input]'); if (ws) ws.send(JSON.stringify({ action: 'input', data: inp ? inp.value : '', task_id: promptQueue[0].taskId })); setPromptQueue(prev => prev.slice(1)); }} className="flex-1 py-4 bg-[#3bb5ff] text-[#060d1a] rounded-xl font-black uppercase tracking-widest text-[10px] btn-touch">Submit</button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* Onboarding UI */}
+        {showTerms && (
+          <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
+            <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
+              <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)] animate-pulse">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#3bb5ff" strokeWidth="2" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              </div>
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Our Terms and Policy</h2>
+                <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Please review before proceeding</p>
+              </div>
+              <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl overflow-y-auto max-h-[50vh] custom-scrollbar text-left">
+                <MiniMarkdown content={`# VAULT OPUS — TERMS OF SERVICE & PRIVACY POLICY
 
 **Version 1-R10 | Effective Date: 2026**
 
@@ -2177,172 +2178,172 @@ By downloading, installing, accessing, or using VAULT OPUS in any form (Desktop 
 ## 6. Liability
 - **No Guarantee**: VAULT OPUS is provided "AS IS" without warranty. WeDu makes no guarantees about data integrity or availability.
 - **Limitation**: WeDu and its contributors shall NOT be liable for any direct or indirect damages arising from use.`} />
-            </div>
-            <button onClick={handleAcceptTerms} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch shadow-lg shadow-[#3bb5ff]/25 border border-[#3bb5ff]/30">I Accept the Terms and Conditions</button>
-          </div>
-        </div>
-      )}
-
-      {showWelcomeVideo && (
-        <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
-          <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
-            <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)]">{Ico.download}</div>
-            <div className="text-center space-y-1">
-              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Setup Tutorial</h2>
-              <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Follow this quick guide to start</p>
-            </div>
-            <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl flex flex-col">
-              <p className="text-sm text-gray-200 mb-4 leading-relaxed font-semibold">New here? go and look to this video:</p>
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-[#1a3a5c] shadow-lg mb-4 bg-black">
-                <iframe className="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed text-left font-medium">then to use the requirements you setup. put the token and the channel id either in popup menu, if it shows up. if it didn't, go to settings and then to volumes tab to create your first vault.</p>
+              <button onClick={handleAcceptTerms} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch shadow-lg shadow-[#3bb5ff]/25 border border-[#3bb5ff]/30">I Accept the Terms and Conditions</button>
             </div>
-            <button onClick={() => { setShowWelcomeVideo(false); setTab('settings'); }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch">I Understand</button>
           </div>
-        </div>
-      )}
+        )}
 
-      {showSetupModal && (
-        <Modal open onClose={() => { }} title="First Time Setup" wide>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-300">Welcome to Vault Opus! Please configure your backend connection to continue.</p>
-            {!setupStatus.has_valid_token && (
-              <div>
-                <label className="text-xs text-gray-500 uppercase">Discord Bot Token</label>
-                <input type="password" value={setupData.token} onChange={e => setSetupData({ ...setupData, token: e.target.value })} placeholder="Token" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm mt-1" />
+        {showWelcomeVideo && (
+          <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
+            <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
+              <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)]">{Ico.download}</div>
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Setup Tutorial</h2>
+                <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Follow this quick guide to start</p>
               </div>
-            )}
-            {!setupStatus.has_valid_channel && (
-              <div>
-                <label className="text-xs text-gray-500 uppercase">Discord Channel ID</label>
-                <input type="text" value={setupData.channel_id} onChange={e => setSetupData({ ...setupData, channel_id: e.target.value })} placeholder="Channel ID" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm mt-1" />
+              <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl flex flex-col">
+                <p className="text-sm text-gray-200 mb-4 leading-relaxed font-semibold">New here? go and look to this video:</p>
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-[#1a3a5c] shadow-lg mb-4 bg-black">
+                  <iframe className="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed text-left font-medium">then to use the requirements you setup. put the token and the channel id either in popup menu, if it shows up. if it didn't, go to settings and then to volumes tab to create your first vault.</p>
               </div>
-            )}
-            {!setupStatus.has_valid_volume && (
-              <div>
-                <label className="text-xs text-gray-500 uppercase">First Volume Name</label>
-                <input type="text" value={setupData.db_name} onChange={e => setSetupData({ ...setupData, db_name: e.target.value })} placeholder="e.g. main" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm mt-1" />
+              <button onClick={() => { setShowWelcomeVideo(false); setTab('settings'); }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch">I Understand</button>
+            </div>
+          </div>
+        )}
+
+        {showSetupModal && (
+          <Modal open onClose={() => { }} title="First Time Setup" wide>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-300">Welcome to Vault Opus! Please configure your backend connection to continue.</p>
+              {!setupStatus.has_valid_token && (
+                <div>
+                  <label className="text-xs text-gray-500 uppercase">Discord Bot Token</label>
+                  <input type="password" value={setupData.token} onChange={e => setSetupData({ ...setupData, token: e.target.value })} placeholder="Token" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm mt-1" />
+                </div>
+              )}
+              {!setupStatus.has_valid_channel && (
+                <div>
+                  <label className="text-xs text-gray-500 uppercase">Discord Channel ID</label>
+                  <input type="text" value={setupData.channel_id} onChange={e => setSetupData({ ...setupData, channel_id: e.target.value })} placeholder="Channel ID" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm mt-1" />
+                </div>
+              )}
+              {!setupStatus.has_valid_volume && (
+                <div>
+                  <label className="text-xs text-gray-500 uppercase">First Volume Name</label>
+                  <input type="text" value={setupData.db_name} onChange={e => setSetupData({ ...setupData, db_name: e.target.value })} placeholder="e.g. main" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-3 py-3 text-sm mt-1" />
+                </div>
+              )}
+              <button onClick={async () => {
+                if (!setupStatus.has_valid_token && !setupData.token) { showToast('Please enter a Discord Bot Token', 'error'); return; }
+                if (!setupStatus.has_valid_channel && !setupData.channel_id) { showToast('Please enter a Discord Channel ID', 'error'); return; }
+                if (!setupStatus.has_valid_volume && !setupData.db_name) { showToast('Please enter a Volume Name', 'error'); return; }
+                try {
+                  const r = await fetch('/api/setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(setupData) });
+                  if (!r.ok) throw new Error((await r.json()).detail || 'Setup failed');
+                  const res = await r.json();
+                  setShowSetupModal(false);
+                  fetchDbs();
+                  fetchConfig();
+                  setSelectedDb(res.db_name);
+                  setTab('explorer');
+                  showToast('Setup complete!', 'success');
+                } catch (e) { showToast(e.message, 'error'); }
+              }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl font-bold mt-2">Finish Setup</button>
+            </div>
+          </Modal>
+        )}
+
+        {showSharePasswordModal && (
+          <Modal open onClose={() => setShowSharePasswordModal(false)} title="Package Volume">
+            <div className="space-y-4">
+              <div className="p-4 bg-[#0f1f3a]/50 border border-[#1a3a5c] rounded-2xl">
+                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Packaging</p>
+                <p className="text-sm font-bold text-white truncate">{dbToShare}</p>
               </div>
-            )}
-            <button onClick={async () => {
-              if (!setupStatus.has_valid_token && !setupData.token) { showToast('Please enter a Discord Bot Token', 'error'); return; }
-              if (!setupStatus.has_valid_channel && !setupData.channel_id) { showToast('Please enter a Discord Channel ID', 'error'); return; }
-              if (!setupStatus.has_valid_volume && !setupData.db_name) { showToast('Please enter a Volume Name', 'error'); return; }
-              try {
-                const r = await fetch('/api/setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(setupData) });
-                if (!r.ok) throw new Error((await r.json()).detail || 'Setup failed');
-                const res = await r.json();
-                setShowSetupModal(false);
-                fetchDbs();
-                fetchConfig();
-                setSelectedDb(res.db_name);
-                setTab('explorer');
-                showToast('Setup complete!', 'success');
-              } catch (e) { showToast(e.message, 'error'); }
-            }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-xl font-bold mt-2">Finish Setup</button>
-          </div>
-        </Modal>
-      )}
-
-      {showSharePasswordModal && (
-        <Modal open onClose={() => setShowSharePasswordModal(false)} title="Package Volume">
-          <div className="space-y-4">
-            <div className="p-4 bg-[#0f1f3a]/50 border border-[#1a3a5c] rounded-2xl">
-              <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Packaging</p>
-              <p className="text-sm font-bold text-white truncate">{dbToShare}</p>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Password Protection (Optional):</label>
+                <input autoFocus type="password" value={sharePassword} onChange={e => setSharePassword(e.target.value)} placeholder="Leave empty for no password" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white focus:border-[#3bb5ff] outline-none" />
+                <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">Recommended for sharing via public links</p>
+              </div>
+              <button onClick={async () => {
+                try {
+                  const r = await fetch('/api/dbs/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: dbToShare, password: sharePassword || null }) });
+                  const d = await r.json();
+                  showToast('Package created in SHARABLES', 'success');
+                  setShowSharePasswordModal(false);
+                  setSharePassword('');
+                } catch (e) { showToast('Packaging failed', 'error'); }
+              }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] btn-touch">Create .VOV Package</button>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Password Protection (Optional):</label>
-              <input autoFocus type="password" value={sharePassword} onChange={e => setSharePassword(e.target.value)} placeholder="Leave empty for no password" className="w-full bg-[#060d1a] border border-[#1a3a5c] rounded-xl px-4 py-3 text-sm text-white focus:border-[#3bb5ff] outline-none" />
-              <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">Recommended for sharing via public links</p>
-            </div>
-            <button onClick={async () => {
-              try {
-                const r = await fetch('/api/dbs/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ db_name: dbToShare, password: sharePassword || null }) });
-                const d = await r.json();
-                showToast('Package created in SHARABLES', 'success');
-                setShowSharePasswordModal(false);
-                setSharePassword('');
-              } catch (e) { showToast('Packaging failed', 'error'); }
-            }} className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] btn-touch">Create .VOV Package</button>
-          </div>
-        </Modal>
-      )}
-      {showTerms && (
-        <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
-          <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
-            <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)] animate-pulse">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#3bb5ff" strokeWidth="2" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            </div>
-
-            <div className="text-center space-y-1">
-              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Our Terms and Policy</h2>
-              <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Please review before proceeding</p>
-            </div>
-
-            <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl overflow-y-auto max-h-[50vh] custom-scrollbar text-left">
-              <MiniMarkdown content={TERMS_AND_CONDITIONS_MARKDOWN} />
-            </div>
-
-            <button
-              onClick={handleAcceptTerms}
-              className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch shadow-lg shadow-[#3bb5ff]/25 border border-[#3bb5ff]/30 cursor-pointer"
-            >
-              I Accept the Terms and Conditions
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showWelcomeVideo && (
-        <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
-          <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
-            <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)]">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#3bb5ff" strokeWidth="2" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-
-            <div className="text-center space-y-1">
-              <h2 className="text-2xl font-black text-white tracking-tight uppercase">Setup Tutorial</h2>
-              <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Follow this quick guide to start</p>
-            </div>
-
-            <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl flex flex-col">
-              <p className="text-sm text-gray-200 mb-4 leading-relaxed font-semibold">
-                New here? go and look to this video:
-              </p>
-
-              {/* YouTube Video Embed */}
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-[#1a3a5c] shadow-lg mb-4 bg-black">
-                <iframe
-                  className="absolute inset-0 w-full h-full"
-                  src={WELCOME_YOUTUBE_VIDEO_URL}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                ></iframe>
+          </Modal>
+        )}
+        {showTerms && (
+          <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
+            <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
+              <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)] animate-pulse">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#3bb5ff" strokeWidth="2" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
 
-              <p className="text-xs text-gray-400 leading-relaxed text-left font-medium">
-                then to use the requirements you setup. put the token and the channel id in requirements input places in settings. and then go to volumes tab and hit plus button to make a new volume and you would be done
-              </p>
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Our Terms and Policy</h2>
+                <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Please review before proceeding</p>
+              </div>
+
+              <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl overflow-y-auto max-h-[50vh] custom-scrollbar text-left">
+                <MiniMarkdown content={TERMS_AND_CONDITIONS_MARKDOWN} />
+              </div>
+
+              <button
+                onClick={handleAcceptTerms}
+                className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch shadow-lg shadow-[#3bb5ff]/25 border border-[#3bb5ff]/30 cursor-pointer"
+              >
+                I Accept the Terms and Conditions
+              </button>
             </div>
-
-            <button
-              onClick={() => {
-                setShowWelcomeVideo(false);
-                setTab('settings');
-              }}
-              className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch shadow-lg shadow-[#3bb5ff]/25 border border-[#3bb5ff]/30 cursor-pointer"
-            >
-              I Understand
-            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-    </div>
-  );
+        {showWelcomeVideo && (
+          <div className="fixed inset-0 z-[150] flex flex-col bg-[#060d1a]/95 backdrop-blur-md p-6 overflow-y-auto safe-top safe-bottom">
+            <div className="flex-1 flex flex-col justify-center items-center max-w-md mx-auto w-full py-8 space-y-6">
+              <div className="w-16 h-16 rounded-full bg-[#3bb5ff]/15 flex items-center justify-center border border-[#3bb5ff]/30 shadow-[0_0_20px_rgba(59,181,255,0.25)]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#3bb5ff" strokeWidth="2" className="w-8 h-8"><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Setup Tutorial</h2>
+                <p className="text-xs text-[#3bb5ff] font-bold uppercase tracking-widest opacity-85">Follow this quick guide to start</p>
+              </div>
+
+              <div className="w-full bg-[#0a1628]/80 border border-[#1a3a5c] rounded-2xl p-5 shadow-2xl flex flex-col">
+                <p className="text-sm text-gray-200 mb-4 leading-relaxed font-semibold">
+                  New here? go and look to this video:
+                </p>
+
+                {/* YouTube Video Embed */}
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-[#1a3a5c] shadow-lg mb-4 bg-black">
+                  <iframe
+                    className="absolute inset-0 w-full h-full"
+                    src={WELCOME_YOUTUBE_VIDEO_URL}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+
+                <p className="text-xs text-gray-400 leading-relaxed text-left font-medium">
+                  then to use the requirements you setup. put the token and the channel id in requirements input places in settings. and then go to volumes tab and hit plus button to make a new volume and you would be done
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowWelcomeVideo(false);
+                  setTab('settings');
+                }}
+                className="w-full py-4 bg-gradient-to-r from-[#006fbe] to-[#3bb5ff] text-white rounded-2xl font-bold uppercase tracking-widest text-xs btn-touch shadow-lg shadow-[#3bb5ff]/25 border border-[#3bb5ff]/30 cursor-pointer"
+              >
+                I Understand
+              </button>
+            </div>
+          </div>
+        )}
+
+        {toast && <Toast key={toast.key} message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      </div>
+      );
 }
