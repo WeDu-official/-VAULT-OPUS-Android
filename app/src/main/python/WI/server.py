@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------
-#server.py (Sandalphon) from the VAULT OPUS PROJECT version 1-R10 (ANDROID MERGE)
+#server.py (Sandalphon) from the VAULT OPUS PROJECT version 1-R10 (ANDROID)
 #by WEDUXOX/WEDUOFFICIAL - https://github.com/WeDu-official
 #I HAD MADE THIS PROJECT FOR FREE FOR ALL
 #from mankind to mankind... if I disappear don't worry it might just be my exams or anything else, but regardless
@@ -140,12 +140,10 @@ if is_android:
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         context.startActivity(intent)
             except Exception as e:
-                # Fallback print if logger is failing during shutdown or redirection
                 print(f"Error requesting Android permissions: {e}")
                 if 'logger' in globals(): logger.error(f"Error requesting Android permissions: {e}")
         request_android_permissions()
     except Exception as e:
-        # Fallback print
         print(f"Failed to initialize Android environment: {e}")
         if 'logger' in globals(): logger.error(f"Failed to initialize Android environment: {e}")
         WRITABLE_DIR = VAULT_OPUS_SRC_DIR
@@ -178,31 +176,9 @@ parser = ListFilesParser(log=logger)
 tree_builder = ListFilesTreeBuilder(log=logger)
 formatter = ListFilesFormatter(log=logger)
 
-app = FastAPI(title="VAULT_OPUS Web GUI API")
+app = FastAPI(title="VAULT OPUS Web GUI API")
 
 TERMS_ACCEPTED_FILE = os.path.join(WRITABLE_DIR, "terms_accepted.txt")
-
-def is_terms_accepted():
-    if not os.path.exists(TERMS_ACCEPTED_FILE):
-        return False
-    try:
-        with open(TERMS_ACCEPTED_FILE, 'r') as f:
-            return f.read().strip() == "1"
-    except Exception:
-        return False
-
-@app.get("/api/terms_status")
-async def get_terms_status():
-    return JSONResponse({"accepted": is_terms_accepted()})
-
-@app.post("/api/accept_terms")
-async def accept_terms():
-    try:
-        with open(TERMS_ACCEPTED_FILE, 'w') as f:
-            f.write("1")
-        return JSONResponse({"success": True})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
 
 app.add_middleware(
     CORSMiddleware,
@@ -244,6 +220,7 @@ class TaskManager:
     def __init__(self, config_path):
         self.config_path = config_path
         self.semaphores = {}
+        self.start_lock = asyncio.Lock()  # <-- ADDED: stagger process starts
         self.refresh()
 
     def refresh(self):
@@ -287,7 +264,6 @@ def get_recent_volumes() -> List[str]:
 
 def save_recent_volumes(recent: List[str]):
     try:
-        # Deduplicate before saving
         unique_recent = []
         seen = set()
         for r in recent:
@@ -324,6 +300,7 @@ def is_terms_accepted() -> int:
 
 @app.get("/api/terms_status")
 async def get_terms_status():
+    """Returns the current acceptance status of terms and conditions."""
     return {"terms_accepted": is_terms_accepted()}
 
 @app.post("/api/accept_terms")
@@ -466,7 +443,6 @@ async def create_db(db_name: str = Body(..., embed=True)):
         await db_manager._db_delete_sync(db_path, [{"base_filename": ""}])
         volume_manager.create_volume_config(db_name)
 
-        # Auto-add to recent
         recent = get_recent_volumes()
         if db_name not in recent:
             recent.insert(0, db_name)
@@ -511,13 +487,12 @@ async def import_db(vov_path: str = Body(..., embed=True), password: Optional[st
         db_path, cfg_path = volume_manager.open_package(vov_path, password)
         db_name = os.path.basename(db_path)
 
-        # Auto-add to recent
         recent = get_recent_volumes()
         if db_name not in recent:
             recent.insert(0, db_name)
             save_recent_volumes(recent)
 
-        return {"status": "success", "db_name": db_name}
+        return {"status": "success", "db_path": db_path, "db_name": db_name}
     except Exception as e:
         logger.error(f"Error importing volume: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -531,7 +506,6 @@ async def list_sharables():
             full_path = os.path.join(volume_manager.SHARABLES_DIR, item)
             is_dir = os.path.isdir(full_path)
             is_vov = item.lower().endswith('.vov')
-            # Detect encrypted: ends with .e.vov
             is_encrypted = item.lower().endswith('.e.vov')
             if is_dir or is_vov:
                 items.append({
@@ -581,13 +555,26 @@ async def delete_db_endpoint(request: dict):
     if not db_name.lower().endswith('.db'): db_name += '.db'
     try:
         db_path = Path(volume_manager.DATABASES_DIR) / db_name
-        if db_path.exists(): os.remove(db_path)
+        logger.info(f"Deletion request received for: {db_name}")
+        logger.info(f"Resolved DB path: {db_path} (Exists: {db_path.exists()})")
+        if db_path.exists():
+            try:
+                os.remove(db_path)
+                logger.info(f"Successfully removed DB file: {db_path}")
+            except Exception as e:
+                logger.error(f"Failed to remove DB file {db_path}: {e}")
+                raise Exception(f"File system error: {e}")
+        else:
+            logger.warning(f"DB file not found at expected path: {db_path}")
         stem = Path(db_name).stem
         config_path = Path(volume_manager.VOLUMES_CONFIGS_DIR) / f"{stem}_config.json"
-        if config_path.exists(): os.remove(config_path)
+        logger.info(f"Resolved config path: {config_path} (Exists: {config_path.exists()})")
+        if config_path.exists():
+            os.remove(config_path)
+            logger.info(f"Successfully removed config file: {config_path}")
         return {"status": "success"}
     except Exception as e:
-        logger.error(f"Error deleting volume: {e}")
+        logger.error(f"Error during volume deletion process: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/dbs/nuke")
@@ -618,6 +605,8 @@ async def nuke_db(payload: dict):
     try:
         deleted = await asyncio.to_thread(_do_nuke)
         return {"status": "success", "db_entries_deleted": deleted}
+    except RuntimeError as e:
+        raise HTTPException(status_code=423, detail=str(e))
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/fs/browse")
@@ -625,7 +614,11 @@ async def browse_directory(path: Optional[str] = Query(None)):
     if not path: path = "/storage/emulated/0" if is_android else str(Path.home())
     try:
         p = Path(path).resolve()
+        if not p.exists():
+            raise HTTPException(status_code=400, detail="Path does not exist")
         if p.is_file(): p = p.parent
+        if not p.is_dir():
+            raise HTTPException(status_code=400, detail="Invalid directory path")
         items = [{"name": "..", "path": str(p.parent), "is_dir": True}] if p.parent != p else []
         for item in p.iterdir():
             try:
@@ -633,6 +626,10 @@ async def browse_directory(path: Optional[str] = Query(None)):
             except (PermissionError, OSError): continue
         items.sort(key=lambda x: (x['name'] != '..', not x['is_dir'], x['name'].lower()))
         return {"current_path": str(p), "items": items}
+    except HTTPException:
+        raise
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="Permission denied")
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/listfiles")
@@ -722,7 +719,6 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             cmd_type = command_args[0] if command_args else ""
 
-            # Create input file for commands that need user interaction
             if cmd_type in ("upload", "update", "download", "delete"):
                 input_fd, input_file_path = tempfile.mkstemp(
                     suffix=".json",
@@ -735,7 +731,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 if "--inputfile" not in command_args:
                     command_args.extend(["--inputfile", input_file_path])
 
-            # Get the appropriate semaphore for this command type
             semaphore = task_manager.get_semaphore(cmd_type)
 
             await manager.send_message(
@@ -743,10 +738,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 websocket
             )
 
-            # Acquire semaphore — this is the ONLY concurrency gate needed.
-            # Multiple tasks of the same type can run concurrently up to the limit.
-            # Different types (upload vs download) run independently.
             async with semaphore:
+                # Stagger starts to avoid Discord rate limits
+                async with task_manager.start_lock:
+                    await asyncio.sleep(2)
+
                 await manager.send_message(
                     json.dumps({"type": "status", "task_id": task_id, "data": "Running...\n"}),
                     websocket
@@ -755,17 +751,13 @@ async def websocket_endpoint(websocket: WebSocket):
                 stream = WSStream(websocket, task_id, loop)
                 active_tasks[task_id] = {"input_file_path": input_file_path}
 
-                # Use contextvars to route stdout/stderr to the correct stream for this task
                 t_out = task_stdout.set(stream)
                 t_err = task_stderr.set(stream)
 
-                # Inject the prompt event into PlatformHandler for synchronous waiting
-                # This is set after the event is created below (see the watch_input replacement)
                 prompt_event = asyncio.Event()
                 prompt_response = None
 
                 async def watch_input():
-                    """Watch for frontend prompt responses via the input file."""
                     last_hash = None
                     while task_id in active_tasks:
                         if not input_file_path or not os.path.exists(input_file_path):
@@ -774,9 +766,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             with open(input_file_path, "r") as f:
                                 data = json.load(f)
                             if data.get("status") == "waiting":
-                                h = hashlib.sha256(
-                                    json.dumps(data, sort_keys=True).encode()
-                                ).hexdigest()
+                                h = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
                                 if h != last_hash:
                                     await manager.send_message(
                                         json.dumps({
@@ -789,11 +779,9 @@ async def websocket_endpoint(websocket: WebSocket):
                                     )
                                     last_hash = h
                             elif data.get("status") == "responded":
-                                # Signal the waiting prompt_input() coroutine
                                 nonlocal prompt_response
                                 prompt_response = data.get("response", "")
                                 prompt_event.set()
-                                # Reset file to prevent re-processing
                                 with open(input_file_path, "w") as f:
                                     json.dump({"status": "idle"}, f)
                         except:
@@ -801,10 +789,9 @@ async def websocket_endpoint(websocket: WebSocket):
                         await asyncio.sleep(0.5)
 
                 watcher = asyncio.create_task(watch_input())
-
-                # Store the event in active_tasks so prompt_input() can access it
                 active_tasks[task_id]["prompt_event"] = prompt_event
                 active_tasks[task_id]["prompt_response_ref"] = lambda: prompt_response
+                active_tasks[task_id]["watcher_task"] = watcher
 
                 try:
                     exit_code = 0
@@ -832,7 +819,6 @@ async def websocket_endpoint(websocket: WebSocket):
             )
 
         finally:
-            # Signal any waiting prompt to unblock (task is ending)
             if task_id in active_tasks and "prompt_event" in active_tasks[task_id]:
                 active_tasks[task_id]["prompt_event"].set()
             if input_file_path and os.path.exists(input_file_path):
@@ -863,13 +849,25 @@ async def websocket_endpoint(websocket: WebSocket):
                             )
                     except:
                         pass
-                # Signal the event AFTER writing the file
-                # so prompt_input() sees the response when it wakes
                 if "prompt_event" in active_tasks[task_id]:
                     active_tasks[task_id]["prompt_event"].set()
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+        # Cleanup all active tasks on disconnect
+        for tid, task in list(active_tasks.items()):
+            watcher = task.get("watcher_task")
+            if watcher and not watcher.done():
+                watcher.cancel()
+            if "prompt_event" in task:
+                task["prompt_event"].set()
+            input_file_path = task.get("input_file_path")
+            if input_file_path and os.path.exists(input_file_path):
+                try:
+                    os.remove(input_file_path)
+                except:
+                    pass
+        active_tasks.clear()
 
 
 def start_server():
